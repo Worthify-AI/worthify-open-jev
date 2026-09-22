@@ -29,3 +29,4 @@ index = json.loads(pathlib.Path("release", sys.argv[1] + ".json").read_text())
 if index.get("schema") != "openjev-phase1-release-index-v1" or index.get("state") != "verified":
     raise SystemExit("Release index is not verified; adapter publication is blocked")
 PY
+PYTHONPATH=src python -m benchmarks.verify_worthify --artifact-dir "results/worthify/$tag"

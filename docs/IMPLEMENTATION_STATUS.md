@@ -4,7 +4,7 @@ Updated September 22, 2026. This is an implementation record, not a trained-mode
 
 - Dedicated GitLab project and GitHub repository created; upstream history is preserved at `53e3028363509f8533d90fe82d983770da1f6c02`. GitLab is authoritative.
 - Implemented native Gemma text loading, pinned LoRA loading, one trainer with two recipes, public dataset conversion, evaluation, and checksummed Hugging Face publication.
-- The current suite passes 98 tests. Original raw-result hashes and all 69 upstream summary claims still verify.
+- The current suite passes 101 tests. Original raw-result hashes and all 69 upstream summary claims still verify.
 - Qwen BF16 reproduction on an RTX 3090 matches all 252 published quality decisions. Both cached shape-scoring modes reproduce their published results, including 5 and 6 disagreements with fresh scoring. Cached scoring is disabled in the Worthify runtime. See `results/worthify/upstream-reproduction-20260922.json`.
 - Data and the common 1,024-row validation comparison sample are frozen; source hashes and counts are committed in `manifests/data-v1.json` and `manifests/comparison-validation-v1.json`.
 - The pinned Gemma 4 12B loads and scores on one A100 40 GB with NF4/BF16. A 64-row pilot using consistent native BF16 base weights passed a fresh-process adapter reload with zero logit difference on eight validation rows. It used about 7.7 GiB and processed 1.4–1.5 training examples/second. See `results/worthify/gemma12b-pilot-bf16-20260922.json`. This corrects the earlier pilot's training-only FP32 base upcast; the earlier record remains available.

@@ -4,6 +4,8 @@ A Worthify extension of [bonsai/openjev](https://github.com/bonsai/openjev), pre
 
 The release adds two reproducible LoRA recipes: text classification/routing and evidence judgments. Inputs contain evidence, a runtime criterion, and 2–16 described options; outputs are conditional option scores without generated answer text. These scores are not calibrated confidence.
 
+The initial recipes use Gemma 4 12B, selected as the project scope rather than a comparative benchmark winner. Both seeds are training on local A100s. See the [implementation status](docs/IMPLEMENTATION_STATUS.md) and [pinned base decision](manifests/base-selection-v1.json).
+
 - [Training recipes](docs/RECIPES.md)
 - [Cache validation](docs/CACHE_VALIDATION.md)
 - [Release and mirroring](docs/RELEASE.md)
