@@ -11,6 +11,7 @@ The initial recipes use Gemma 4 12B, selected as the project scope rather than a
 - [Release and mirroring](docs/RELEASE.md)
 - [Model revisions](manifests/gemma-models.json)
 - [Licensing and attribution](THIRD_PARTY_WORTHIFY.md)
+- [Doom and Tetris-style recorded gameplay](game-demo/README.md) — replay tools are ready; trained-model recordings follow training.
 
 GitLab is authoritative; GitHub is the public release mirror. Model adapters and their evidence will be published under Worthify's Hugging Face organization. Base models, private data, and credentials do not belong in this repository.
 

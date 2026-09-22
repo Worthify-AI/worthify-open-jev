@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark">
+    <meta name="description" content="Recorded Worthify Jev game-controller demonstrations.">
+    <title>Worthify Jev — Game replay</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2311161d'/%3E%3Cpath d='M8 9h5l3 9 3-9h5l-6 15h-4z' fill='%2379e2b6'/%3E%3C/svg%3E">
+    <link rel="stylesheet" href="replay.css">
+    <script src="replay.js" defer></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="wordmark" href="../">Worthify <span>Jev</span></a>
+      <p>Recorded game-controller demonstration</p>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Episode archive</p>
+        <h1 id="page-title">Model play, frame by frame</h1>
+        <p>This page replays previously recorded episodes. It does not run a game or model in your browser.</p>
+      </section>
+
+      <section class="replay-shell" aria-labelledby="replay-title">
+        <div class="toolbar">
+          <label for="episode-select">Episode</label>
+          <select id="episode-select" disabled>
+            <option>Loading recordings…</option>
+          </select>
+          <span id="game-badge" class="badge" hidden></span>
+        </div>
+
+        <div id="smoke-warning" class="smoke-warning" role="alert" hidden>
+          SCRIPTED SMOKE TEST — NOT MODEL PLAY
+        </div>
+
+        <div id="status" class="status" role="status" aria-live="polite">
+          <h2 id="replay-title">Checking for recorded episodes</h2>
+          <p id="status-detail">The archive will appear here when a recording is available.</p>
+        </div>
+
+        <div id="player" class="player" hidden>
+          <div class="stage">
+            <img id="game-frame" alt="" width="640" height="480">
+            <p id="frame-note" class="frame-note" hidden></p>
+            <div class="stage-meta">
+              <span id="step-label">Initial state</span>
+              <span id="score-label">Score —</span>
+            </div>
+          </div>
+
+          <div class="controls" aria-label="Replay controls">
+            <button id="restart-button" type="button" aria-label="Restart replay">↺ <span>Restart</span></button>
+            <button id="play-button" class="primary" type="button" aria-label="Play replay">▶ <span>Play</span></button>
+            <label class="timeline-label" for="timeline">Replay position</label>
+            <input id="timeline" type="range" min="0" max="0" value="0" step="1">
+            <output id="position-label" for="timeline">0 / 0</output>
+            <label for="speed-select">Speed</label>
+            <select id="speed-select">
+              <option value="0.5">0.5×</option>
+              <option value="1" selected>1×</option>
+              <option value="2">2×</option>
+              <option value="4">4×</option>
+            </select>
+          </div>
+
+          <div class="readout-grid">
+            <section class="panel action-panel" aria-labelledby="action-title">
+              <p class="panel-kicker" id="action-mode">Next decision</p>
+              <h2 id="action-title">Waiting for the first action</h2>
+              <p class="state-label">Text state before this action</p>
+              <p id="state-text" class="state-text"></p>
+              <div id="option-list" class="option-list" aria-label="Option scores"></div>
+            </section>
+
+            <aside class="panel facts" aria-labelledby="facts-title">
+              <h2 id="facts-title">Episode details</h2>
+              <dl>
+                <div><dt>Game</dt><dd id="fact-game">—</dd></div>
+                <div><dt>Seed</dt><dd id="fact-seed">—</dd></div>
+                <div><dt>Controller</dt><dd id="fact-controller">—</dd></div>
+                <div id="model-fact"><dt>Base model</dt><dd id="fact-model">—</dd></div>
+                <div id="adapter-fact"><dt>Adapter</dt><dd id="fact-adapter">—</dd></div>
+                <div><dt>Reward</dt><dd id="fact-reward">—</dd></div>
+                <div><dt>End condition</dt><dd id="fact-ended">In progress</dd></div>
+              </dl>
+            </aside>
+          </div>
+
+          <details class="limitations" open>
+            <summary>How to interpret this replay</summary>
+            <p id="interpretation-note">Option probabilities are conditional and uncalibrated. The controller received text game state only; frames are shown for human review.</p>
+            <ul id="limitations-list"></ul>
+          </details>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>Worthify Jev · Recorded demonstration artifact</p>
+    </footer>
+  </body>
+</html>

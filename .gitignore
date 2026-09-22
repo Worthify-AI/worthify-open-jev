@@ -1,4 +1,5 @@
 .venv/
+.game-venv/
 __pycache__/
 .pytest_cache/
 *.pyc
@@ -19,4 +20,10 @@ artifacts/
 
 .venv
 .playwright-mcp/
+.playwright-cli/
 *.egg-info/
+
+# Keep the empty public replay index; generated runs belong in artifacts.
+!game-demo/runs/
+game-demo/runs/*
+!game-demo/runs/index.json

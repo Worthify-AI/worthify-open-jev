@@ -24,6 +24,21 @@ The groundwork has passed two limited checks. A pinned Qwen baseline reproductio
 
 Both recipes use Gemma 4 12B at a pinned revision. This first release focuses on that base and does not claim it won a completed comparison against larger models. The four full training runs are in progress. Cached prefix and shared-state scoring are disabled for Worthify release measurements because equivalence testing found decision changes against fresh direct scoring. Release results will use fresh direct scoring. Returned probabilities are conditional on the supplied options and are not calibrated confidence values; deployment teams must validate and calibrate them for their own workload and decision costs.
 
+## Watching a decision become an action
+
+The planned release also includes recorded Doom and Tetris-style examples. A
+small ViZDoom scenario sends engine variables and object labels as text; a
+falling-block game sends an ASCII board and legal placements. The classification
+adapter chooses among the supplied actions, and the browser replay shows the
+choice, option scores, and resulting frame. These demonstrations use the same
+text-only API as the two recipes. They do not use screenshot understanding or
+game-specific reinforcement learning.
+
+The recording recipe fixes three seeds per game before running and retains
+losses alongside successes. Playback speed is adjustable, so the videos are not
+latency comparisons. Add links to the verified recordings after training; do
+not substitute the explicitly labelled random-control smoke tests.
+
 ## Release evidence to insert after review
 
 Before publication, replace this block from the checksummed release manifests and reviewed aggregate reports:
