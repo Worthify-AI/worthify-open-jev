@@ -1,0 +1,229 @@
+{
+  "artifact_scope": "Aggregate reproduction evidence; raw run artifacts remain local and are identified by hashes.",
+  "artifacts": {
+    "authored-report.json": {
+      "bytes": 20961,
+      "sha256": "3449e140651fc0fc12312ab552ab5a5e54a25da20df3e170d8edc3fed5a5dcf3"
+    },
+    "direct-authored144.jsonl": {
+      "bytes": 172689,
+      "sha256": "a4098e77f4b9a1a609ea0ca71a0f28bb23d4bf457cc04733a49277876c821d54"
+    },
+    "direct-perturbations108.jsonl": {
+      "bytes": 129376,
+      "sha256": "2f3c5a43978cc3badf5dd8c2db0fda45e074d4c8a7b35a55ef984ef1c9dba729"
+    },
+    "perturbation-report.json": {
+      "bytes": 183767,
+      "sha256": "2a7ba7e633c93b122aa99a4248ae46af747975b1a4e30026fea66b2b12b2d1f2"
+    },
+    "shape777-report.json": {
+      "bytes": 1837,
+      "sha256": "d3d3059b585c4c81f785ccb4b5df4f836fb39857a1dd94f2fc914a2ceb946d99"
+    },
+    "shape777-report.predictions.jsonl": {
+      "bytes": 2125996,
+      "sha256": "3ee9c3006d7e6d6180bd675148eb6e894c56d83b4ba4bbeb3531764159c16f9a"
+    }
+  },
+  "authored_quality": {
+    "committed_mean_family_balanced_accuracy": 0.8132381607613807,
+    "committed_mean_family_macro_f1": 0.8043531917416544,
+    "correct": 116,
+    "coverage": 1.0,
+    "incorrect": 28,
+    "max_option_probability_abs_difference_from_committed": 9.731435279825007e-08,
+    "mean_family_balanced_accuracy": 0.8132381607613807,
+    "mean_family_macro_f1": 0.8043531917416544,
+    "rows": 144,
+    "semantic_argmax_agreement_with_committed": 1.0
+  },
+  "command_context": "Run in the pinned upstream checkout; $OUT must be a fresh output directory and $HF_CACHE the pinned Hub cache. The --cache-dir loader argument was a Worthify addition; on pure upstream use HF_HUB_CACHE and omit that argument.",
+  "commands": [
+    "CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=$GPU_UUID HF_HUB_CACHE=$HF_CACHE HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 .venv/bin/openjev-score --mode serial --model Qwen/Qwen3.5-4B --revision 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a --input benchmarks/data/authored144.jsonl --output $OUT/direct-authored144.jsonl",
+    "CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=$GPU_UUID HF_HUB_CACHE=$HF_CACHE HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 .venv/bin/openjev-score --mode serial --model Qwen/Qwen3.5-4B --revision 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a --input benchmarks/data/perturbations108.jsonl --output $OUT/direct-perturbations108.jsonl",
+    "CUDA_DEVICE_ORDER=PCI_BUS_ID CUDA_VISIBLE_DEVICES=$GPU_UUID HF_HUB_CACHE=$HF_CACHE HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 .venv/bin/python benchmarks/shape777.py --model Qwen/Qwen3.5-4B --revision 851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a --input benchmarks/data/shape777.jsonl --output $OUT/shape777-report.json",
+    ".venv/bin/python benchmarks/evaluate.py --gold benchmarks/data/authored144.jsonl --predictions $OUT/direct-authored144.jsonl --output $OUT/authored-report.json",
+    ".venv/bin/python benchmarks/evaluate_perturbations.py --gold benchmarks/data/authored144.jsonl --perturbations benchmarks/data/perturbations108.jsonl --direct-base $OUT/direct-authored144.jsonl --direct-perturbations $OUT/direct-perturbations108.jsonl --reranker-base results/raw/predictions/reranker-authored144.jsonl --reranker-perturbations results/raw/predictions/reranker-perturbations108.jsonl --output $OUT/perturbation-report.json"
+  ],
+  "environment": {
+    "python": "3.12.3",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.17.0"
+  },
+  "hardware": {
+    "driver": "575.57.08",
+    "memory_mib": 24576,
+    "name": "NVIDIA GeForce RTX 3090"
+  },
+  "inputs": {
+    "authored144": {
+      "rows": 144,
+      "sha256": "8162d1c73f925af64453f1ec05ef36d583b3815bf698e60f0d454bd11537e079"
+    },
+    "perturbations108": {
+      "rows": 108,
+      "sha256": "1dd7ccf80518d0e34886478ca23982aa726e9daccd343b9e95cedaf6b569bec4"
+    },
+    "shape777": {
+      "rows": 777,
+      "sha256": "8dcf414b12fc2684e3c4ca5f3ebfd3f525f5346fec4a9bc67eb65138101f55f1"
+    }
+  },
+  "limitations": [
+    "Serial and parallel shared-state results are not numerically or decision-equivalent to fresh scoring: 5 and 6 of 777 argmaxes flip, respectively. These exact flip sets reproduce the committed limitation.",
+    "Runtime reported slower PyTorch reference implementations with causal_conv1d and flash-linear-attention unavailable. Wall time was 11\u201313% above the published run; this single run does not isolate the cause.",
+    "Timing is one reproduction run, not a confidence interval or hardware-independent speed claim.",
+    "The perturbation evaluator also embeds committed reranker results because its frozen CLI requires both systems; only the direct_logits section was reproduced here."
+  ],
+  "load_mode": {
+    "adapter": null,
+    "offline_cache": true,
+    "quantization": "none",
+    "visible_cuda_devices": 1,
+    "weights": "native BF16"
+  },
+  "model": {
+    "dtype": "bfloat16",
+    "quantization": "none",
+    "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+    "source": "Qwen/Qwen3.5-4B",
+    "torch_version": "2.10.0+cu128",
+    "transformers_version": "5.17.0",
+    "use_cache": true
+  },
+  "perturbation_quality": {
+    "committed_missing_evidence_confident_non_insufficient_at_0_8": 1,
+    "correct": 84,
+    "incorrect": 24,
+    "max_option_probability_abs_difference_from_committed": 1.210259796824431e-07,
+    "missing_evidence_confident_non_insufficient_at_0_8": 1,
+    "rows": 108,
+    "semantic_argmax_agreement_with_committed": 1.0,
+    "variants": {
+      "criterion_wrapper": {
+        "argmax_flips_from_base": 9,
+        "committed_argmax_flips_from_base": 9,
+        "committed_mean_family_balanced_accuracy": 0.7058201058201058,
+        "correct": 26,
+        "incorrect": 10,
+        "mean_family_balanced_accuracy": 0.7058201058201058,
+        "rows": 36
+      },
+      "irrelevant_context": {
+        "argmax_flips_from_base": 4,
+        "committed_argmax_flips_from_base": 4,
+        "committed_mean_family_balanced_accuracy": 0.8206349206349207,
+        "correct": 29,
+        "incorrect": 7,
+        "mean_family_balanced_accuracy": 0.8206349206349207,
+        "rows": 36
+      },
+      "option_reversal": {
+        "argmax_flips_from_base": 10,
+        "committed_argmax_flips_from_base": 10,
+        "committed_mean_family_balanced_accuracy": 0.8132275132275133,
+        "correct": 29,
+        "incorrect": 7,
+        "mean_family_balanced_accuracy": 0.8132275132275133,
+        "rows": 36
+      }
+    }
+  },
+  "reproduction_note": "Quality predictions use the upstream serial scoring mode, matching the published baseline; shape accuracy is not scored. Cached modes failed equivalence and are disabled in Worthify release code.",
+  "schema": "openjev-upstream-qwen-reproduction-v1",
+  "shape777": {
+    "agreement_with_committed_modes": {
+      "fresh": {
+        "argmax_flips": [],
+        "decision_agreement": 1.0,
+        "max_option_probability_abs_difference": 7.623386832911194e-08,
+        "mean_option_probability_abs_difference": 1.4499491777149509e-08,
+        "rows": 777
+      },
+      "parallel_shared": {
+        "argmax_flips": [],
+        "decision_agreement": 1.0,
+        "max_option_probability_abs_difference": 7.623386832911194e-08,
+        "mean_option_probability_abs_difference": 1.4445887103325755e-08,
+        "rows": 777
+      },
+      "serial_prefix": {
+        "argmax_flips": [],
+        "decision_agreement": 1.0,
+        "max_option_probability_abs_difference": 7.623386832911194e-08,
+        "mean_option_probability_abs_difference": 1.4257537933139356e-08,
+        "rows": 777
+      }
+    },
+    "timings": [
+      {
+        "committed_decisions_per_second": 2.33288918718511,
+        "committed_mode": "fresh_batch1",
+        "committed_wall_seconds": 333.06339806801407,
+        "decisions_per_second": 2.07835055251468,
+        "mode": "fresh",
+        "peak_cuda_bytes": 9004322304,
+        "state_p50_seconds": 10.193590662907809,
+        "throughput_change_percent": -10.910875495872085,
+        "wall_seconds": 373.8541600019671,
+        "wall_time_change_percent": 12.247146390316743
+      },
+      {
+        "committed_decisions_per_second": 10.752295486267677,
+        "committed_mode": "serial_prefix",
+        "committed_wall_seconds": 72.26363905199105,
+        "decisions_per_second": 9.653936672436062,
+        "mode": "serial_prefix",
+        "peak_cuda_bytes": 9105315328,
+        "state_p50_seconds": 2.1908389599993825,
+        "throughput_change_percent": -10.215110022175145,
+        "wall_seconds": 80.48530111229047,
+        "wall_time_change_percent": 11.377315297371382
+      },
+      {
+        "committed_decisions_per_second": 20.02983018016784,
+        "committed_mode": "parallel_suffix",
+        "committed_wall_seconds": 38.79214117198717,
+        "decisions_per_second": 17.697682629776793,
+        "mode": "parallel_shared",
+        "peak_cuda_bytes": 11834919936,
+        "state_p50_seconds": 1.1750760190188885,
+        "throughput_change_percent": -11.643371558387837,
+        "wall_seconds": 43.904053217265755,
+        "wall_time_change_percent": 13.177700149663396
+      }
+    ],
+    "within_run_cached_vs_fresh": {
+      "parallel_shared": {
+        "argmax_flips": [
+          "8378b16d3504101615a3",
+          "21938acb79a8a74da58b",
+          "089f4a6f39b20bf65ab7",
+          "08fa07ef7b1270bc85e6",
+          "800d47937a344f61289f",
+          "c70b4b1f019acff741d7"
+        ],
+        "decision_agreement": 0.9922779922779923,
+        "exact_equivalence_passed": false,
+        "max_probability_difference": 0.06241874674751252,
+        "rows": 777
+      },
+      "serial_prefix": {
+        "argmax_flips": [
+          "2f9b07aba6f967fa92dd",
+          "21938acb79a8a74da58b",
+          "089f4a6f39b20bf65ab7",
+          "08fa07ef7b1270bc85e6",
+          "800d47937a344f61289f"
+        ],
+        "decision_agreement": 0.9935649935649936,
+        "exact_equivalence_passed": false,
+        "max_probability_difference": 0.09338587425955441,
+        "rows": 777
+      }
+    }
+  },
+  "status": "complete",
+  "upstream_commit": "53e3028363509f8533d90fe82d983770da1f6c02"
+}

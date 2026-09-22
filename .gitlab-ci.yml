@@ -1,0 +1,54 @@
+stages:
+  - verify
+  - publish
+
+verify:
+  stage: verify
+  image: python:3.12-slim
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends git
+    - pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cpu
+    - pip install -e '.[test,train]'
+    - test -s LICENSE && test -s LICENSES/Apache-2.0.txt
+    - pytest -q
+    - (cd results/raw && sha256sum -c SHA256SUMS)
+    - python benchmarks/verify_published.py
+
+private_hub_smoke:
+  stage: publish
+  image: python:3.12-slim
+  needs: [verify]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $HF_SMOKE_REPO_ID'
+  script:
+    - test "${CI_COMMIT_REF_PROTECTED:-false}" = true
+    - pip install huggingface-hub==1.31.0
+    - PYTHONPATH=src python scripts/hf-private-smoke.py --repo-id "$HF_SMOKE_REPO_ID" --output artifacts/hf-private-smoke --code-revision "$CI_COMMIT_SHA"
+  artifacts:
+    paths:
+      - artifacts/hf-private-smoke/receipt.json
+    expire_in: 1 year
+
+mirror_github:
+  stage: publish
+  image: alpine:3.20
+  needs: [verify]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $GITHUB_MIRROR_URL'
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+/ && $GITHUB_MIRROR_URL'
+  script:
+    - apk add --no-cache bash git openssh-client
+    - if [ -n "${CI_COMMIT_TAG:-}" ]; then scripts/mirror-to-github.sh "refs/tags/$CI_COMMIT_TAG"; else scripts/mirror-to-github.sh "refs/heads/$CI_DEFAULT_BRANCH"; fi
+
+release_adapter:
+  stage: publish
+  image: python:3.12-slim
+  needs: [verify]
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v[0-9]+\.[0-9]+\.[0-9]+/'
+  script:
+    - apt-get update && apt-get install -y --no-install-recommends git
+    - pip install huggingface-hub==1.31.0
+    - scripts/release-check.sh "$CI_COMMIT_TAG"
+    - test "${CI_COMMIT_REF_PROTECTED:-false}" = true
+    - PYTHONPATH=src python -m openjev_phase1.publish publish-index --index "release/${CI_COMMIT_TAG}.json" --work-dir /tmp/openjev-release --release-public

@@ -44,6 +44,10 @@ class SerialPrefixScorer:
     """Cache the current state, then score independent copied suffix branches."""
 
     def __init__(self, model, tokenizer, metadata: dict, max_tokens: int = 4096):
+        raise RuntimeError(
+            "Cached serial scoring is disabled for Worthify releases: equivalence testing "
+            "found 5/777 decision flips versus fresh direct scoring. Use --mode direct."
+        )
         self.model = model
         self.tokenizer = tokenizer
         self.metadata = {**metadata, "serving_config": "native-state-prefix-cache-v1"}

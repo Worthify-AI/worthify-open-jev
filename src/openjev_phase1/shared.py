@@ -52,6 +52,10 @@ def _suffix_layout(sequences: list[list[int]], prefix_length: int, pad_id: int):
 
 def score_shared(model, tokenizer, rows: list[dict], metadata: dict, max_tokens: int = 4096):
     """Return all option distributions together after one state prefill."""
+    raise RuntimeError(
+        "Cached shared scoring is disabled for Worthify releases: equivalence testing "
+        "found 6/777 decision flips versus fresh direct scoring. Use --mode direct."
+    )
     import torch
 
     if not rows or any(row["state"] != rows[0]["state"] for row in rows[1:]):

@@ -1,0 +1,17 @@
+{
+  "version": "openjev-training-recipe-v1",
+  "task": "classification",
+  "dataset": "CLINC150",
+  "seeds": [42, 43],
+  "training": {
+    "quantization": "nf4",
+    "max_tokens": 2048,
+    "effective_batch_size": 16,
+    "epochs": 2,
+    "learning_rate": 0.0002,
+    "lora_rank": 16,
+    "lora_alpha": 32,
+    "lora_dropout": 0.05,
+    "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]
+  }
+}

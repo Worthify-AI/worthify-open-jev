@@ -1,0 +1,16 @@
+# Worthify licensing and attribution inventory
+
+Verified September 22, 2026. Licenses apply separately to code, base weights, adapters, and datasets; the repository's MIT license does not relicense external data or model weights.
+
+| Component | Source and license | Preservation and modifications |
+|---|---|---|
+| OpenJev code | [bonsai/openjev, pinned commit 53e3028](https://github.com/bonsai/openjev/tree/53e3028363509f8533d90fe82d983770da1f6c02), forked from TheoLeeCJ/SemIf; [MIT](https://github.com/bonsai/openjev/blob/53e3028363509f8533d90fe82d983770da1f6c02/LICENSE) | Original history, TheoLeeCJ copyright, LICENSE, authored fixtures, and published result artifacts retained. Worthify adds Gemma text loading, adapters, training, governed data conversion, evaluation, and publishing. Worthify source additions use MIT. |
+| Google Gemma 4 | Immutable revisions in `manifests/gemma-models.json`; [Apache 2.0](https://ai.google.dev/gemma/apache_2) | Base weights are downloaded separately. Derived adapters use Apache 2.0 with the complete license, attribution, and an explicit fine-tuning notice. Preserve any applicable base NOTICE file using `package --base-notice`; do not invent a NOTICE when none is supplied. |
+| CLINC150 | Larson et al., *An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction* (2019); [source](https://github.com/clinc/oos-eval/tree/828f8093932c8fe6ca7936c3d2e52903b1c523de), [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) | Source license retained by reference in dataset and adapter attribution. Worthify converts utterances and intent labels into runtime candidate sets, reserves unseen labels, groups duplicates, and freezes new splits. These are not original 150-way benchmark results. |
+| WANLI | Liu et al., *WANLI: Worker and AI Collaboration for Natural Language Inference Dataset Creation* (2022); [dataset card](https://huggingface.co/datasets/alisawuffles/WANLI), [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) | Pinned snapshot and hashes in `recipes/wanli.json`. Worthify maps entailment/contradiction/neutral to supported/contradicted/insufficient, groups related premises, excludes upstream-test-related components, and freezes new balanced splits. |
+
+Training uses public, attributed CLINC150/WANLI records. Company records and Jev-generated labels are excluded. Source snapshots and derived JSONL stay outside the Git repository; any later redistribution must preserve their own CC attribution and indicate transformations. Dataset attribution accompanies the adapters without claiming that the dataset licenses are Apache 2.0.
+
+The project reproduces OpenJev's published runtime-decision methodology. It does not reproduce Jev's undisclosed training or imply endorsement by its creators. [TypeSafe's master customer agreement](https://typesafe.ai/legal/mca) restricts imitation training using the service or its outputs; this project does not obtain training labels from that service. Upstream public comparison artifacts retain their original attribution and evaluation-only role.
+
+The release packager includes only adapters, configuration, model cards, attribution, licenses, checksums, and aggregate evidence. It excludes base weights, source data, row-level predictions, caches, and credentials.

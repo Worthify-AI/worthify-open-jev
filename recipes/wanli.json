@@ -1,0 +1,24 @@
+{
+  "dataset": "WANLI",
+  "converter": "openjev_phase1.datasets:convert_wanli",
+  "source": {
+    "url": "https://huggingface.co/datasets/alisawuffles/WANLI/resolve/61c95318fd71c55b6ba355d76253254615f387ec/train.jsonl",
+    "revision": "61c95318fd71c55b6ba355d76253254615f387ec",
+    "sha256": "85058cf017a911e89242dc29fa0a4ddaad3664cb923dc0a82145fdda14b694e5",
+    "license": "CC-BY-4.0"
+  },
+  "excluded_upstream_test": {
+    "url": "https://huggingface.co/datasets/alisawuffles/WANLI/resolve/61c95318fd71c55b6ba355d76253254615f387ec/test.jsonl",
+    "sha256": "4276e0af7fcdf657d1ab7beb54eaf025fda592a76c9ee86b63b7871953fc74fd",
+    "selection_manifest": "benchmarks/manifests/source-selection.jsonl",
+    "component_keys": ["pairID", "normalized premise"]
+  },
+  "seed": 291607,
+  "caps": {
+    "train": 20000,
+    "validation": 1500,
+    "test": 1500
+  },
+  "grouping": ["pairID", "NFKC case-folded alphanumeric premise"],
+  "options": ["supported", "insufficient", "contradicted"]
+}

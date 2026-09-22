@@ -1,0 +1,86 @@
+{
+  "counts": {
+    "clinc150": {
+      "test": 7323,
+      "train": 12069,
+      "validation": 4308
+    },
+    "wanli": {
+      "test": 1500,
+      "train": 19998,
+      "validation": 1500
+    }
+  },
+  "create_only": true,
+  "files": {
+    "clinc150-test-seen-label.jsonl": {
+      "rows": 3622,
+      "sha256": "8fe08b1385965187ac7991a4fde53d3bc3b109b1412574c1605f925ce03f7c6c"
+    },
+    "clinc150-test-unseen-label.jsonl": {
+      "rows": 2250,
+      "sha256": "5d21d7045349dd98f7a7a36deafc2a299dd213659915d152d8dc37edaa7840a1"
+    },
+    "clinc150-test.jsonl": {
+      "rows": 7323,
+      "sha256": "9bbc70662dac16ff5da4c12b73131f17204116b74c81a3a3e75b253d15e76fc0"
+    },
+    "clinc150-train.jsonl": {
+      "rows": 12069,
+      "sha256": "864f2ef0548749851a83cc07c0fdd0bd11b22f7cb54e4d9a7114009d448f65e1"
+    },
+    "clinc150-validation.jsonl": {
+      "rows": 4308,
+      "sha256": "632ffa50580b5799eec470539abbdd514f9d7478e0177bbdecc5b5a3abb43f04"
+    },
+    "wanli-test.jsonl": {
+      "rows": 1500,
+      "sha256": "91246a57a19b0df579a385306fa5c44feacc37a75b40be53f07c13a970b0876e"
+    },
+    "wanli-train.jsonl": {
+      "rows": 19998,
+      "sha256": "42d2597f2ece9d8d08be932ee8b4d34cc0df4df21aa02373908c63eba7f17277"
+    },
+    "wanli-validation.jsonl": {
+      "rows": 1500,
+      "sha256": "67374b3ce0479bd869c652e245b4a52cbda6f8a1793c4a4ad1cc97d3d35093eb"
+    }
+  },
+  "seed": 291607,
+  "sources": {
+    "clinc150": {
+      "attribution": "Larson et al., An Evaluation Dataset for Intent Classification and Out-of-Scope Prediction",
+      "filename": "clinc150-data_full.json",
+      "license": "CC-BY-3.0",
+      "local_sha256": "36923c3705a59e08fe9c3883d8bc2dd966ef93e22cb78ac41171782a698d56e0",
+      "revision": "828f8093932c8fe6ca7936c3d2e52903b1c523de",
+      "sha256": "36923c3705a59e08fe9c3883d8bc2dd966ef93e22cb78ac41171782a698d56e0",
+      "url": "https://raw.githubusercontent.com/clinc/oos-eval/828f8093932c8fe6ca7936c3d2e52903b1c523de/data/data_full.json"
+    },
+    "wanli": {
+      "attribution": "Liu et al., WANLI: Worker and AI Collaboration for Natural Language Inference Dataset Creation",
+      "filename": "wanli-train.jsonl",
+      "license": "CC-BY-4.0",
+      "local_sha256": "85058cf017a911e89242dc29fa0a4ddaad3664cb923dc0a82145fdda14b694e5",
+      "revision": "61c95318fd71c55b6ba355d76253254615f387ec",
+      "sha256": "85058cf017a911e89242dc29fa0a4ddaad3664cb923dc0a82145fdda14b694e5",
+      "url": "https://huggingface.co/datasets/alisawuffles/WANLI/resolve/61c95318fd71c55b6ba355d76253254615f387ec/train.jsonl"
+    }
+  },
+  "splitting": {
+    "clinc_unseen_test_labels": 15,
+    "clinc_unseen_validation_labels": 15,
+    "group_disjoint": true,
+    "max_train_rows_per_dataset": 20000,
+    "normalized_text_disjoint": true,
+    "wanli_official_test_excluded": true
+  },
+  "version": "openjev-data-v1",
+  "wanli_external_selection_manifest_sha256": "00805b6ef7c258502a9a6f3dc2b61166e0d5e698736022f187681c99bb726fcc",
+  "wanli_external_test_source_sha256": "4276e0af7fcdf657d1ab7beb54eaf025fda592a76c9ee86b63b7871953fc74fd",
+  "wanli_upstream_test": {
+    "sha256": "4276e0af7fcdf657d1ab7beb54eaf025fda592a76c9ee86b63b7871953fc74fd",
+    "url": "https://huggingface.co/datasets/alisawuffles/WANLI/resolve/61c95318fd71c55b6ba355d76253254615f387ec/test.jsonl",
+    "use": "excluded; external evaluation selection is frozen separately"
+  }
+}

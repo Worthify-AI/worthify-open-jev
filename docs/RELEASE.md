@@ -1,0 +1,32 @@
+# Release procedure
+
+GitLab is canonical. CI mirrors the protected default branch and release tags to GitHub with ordinary non-force refspecs; annotated tags are preserved. Protected file variables `GITHUB_DEPLOY_KEY` and `GITHUB_KNOWN_HOSTS`, plus `GITHUB_MIRROR_URL`, configure the mirror. The default verification job installs CPU Torch and runs the full test suite, including the small native Gemma/PEFT gradient test.
+
+Use the verified company Hugging Face organization for both private candidate repositories and public release repositories. Set `HF_ORG` to that organization's exact namespace; the examples below do not assert that a particular namespace is available. Issues and pull requests do not synchronize. Make source changes in GitLab; GitHub accepts the mirrored branch and release tags.
+
+Before full training, configure a protected, masked `HF_TOKEN` limited to the project's Hub repositories and a protected `HF_SMOKE_REPO_ID` naming the private transport-test repository. The `private_hub_smoke` default-branch job uploads an inert payload, downloads it at the returned immutable commit, verifies every checksum, and saves a receipt as a CI artifact. A successful local transport check is useful but does not substitute for running this CI job with its scoped credential. No model claim or public visibility change is made by this check.
+
+1. Finish both training seeds, 42 and 43, for each recipe: `classification` and `evidence`. Both recipes use the same validation-selected, pinned Gemma base. Evaluate each exported adapter on held-out test rows. The evaluator verifies the prediction metadata against the requested base, adapter hash, and seed, and hashes its actual input files.
+2. Package each recipe into a new directory with `python -m openjev_phase1.publish package --recipe classification --run-dir /path/seed42 --run-dir /path/seed43 --evaluation /path/eval42.json --evaluation /path/eval43.json --selected-seed 42 --output /path/classification-release`. Repeat with `--recipe evidence` and its own paths/selected seed. Choose the seed by validation macro-F1, never test scores. The packager rejects mismatched provenance, missing verified input hashes, nonfinite metrics, or different bases/test inputs across seeds.
+3. Run `python -m openjev_phase1.publish validate --artifact-dir /path/classification-release`, then `python -m openjev_phase1.publish upload-private --artifact-dir /path/classification-release --repo-id "$HF_ORG/openjev-candidate-classification"`. Repeat for evidence. The upload command returns a JSON receipt containing the exact Hub commit and hashes after downloading every file at that commit to verify it. Existing public repositories and stale extra files are rejected.
+4. Put the two verified private commit hashes, recipe names, selected seeds, and destination repositories in `release/vMAJOR.MINOR.PATCH.json`; set `state` to `verified` only after successful private verification. Both recipes may select the same seed. The checked-in pending index has no claimed candidate revisions or selected seeds.
+5. Commit the index and supporting aggregate measurements, and run `pytest -q`, `(cd results/raw && sha256sum -c SHA256SUMS)`, and `python benchmarks/verify_published.py`. Do not tag a release with placeholder measurements. The release check requires the exact tagged checkout and a verified index.
+6. The protected release-tag job invokes `publish-index --release-public`. It downloads both candidates at their pinned revisions into separate recipe directories, copies cached files into a clean flat bundle, and validates both packages before promoting either. Each public destination is staged privately, uploaded, and re-downloaded at its returned commit before visibility changes. An existing public destination is refused; use a new release destination when publishing another version.
+
+For one already validated candidate, explicit promotion is also available:
+
+```bash
+python -m openjev_phase1.publish promote-public \
+  --artifact-dir /path/classification-release \
+  --private-repo-id "$HF_ORG/openjev-candidate-classification" \
+  --private-revision PRIVATE_COMMIT_SHA40 \
+  --public-repo-id "$HF_ORG/openjev-classification-v0.1.0" --release-public
+```
+
+`HF_TOKEN` is consumed by the Hugging Face client or its normal cached login. CI provides it as a masked secret. The release directory contains only adapter weights/configuration, an Apache-2.0 license and model card, linked training/evaluation manifests, aggregate results for both seeds, and `SHA256SUMS`. Base weights, raw records, predictions, caches, nested directories, symlinks, and credential files are excluded.
+
+## Provenance contract
+
+`release-manifest.json` uses `openjev-phase1-adapter-release-v1`, identifies the recipe and selected seed, and links every evidence file by SHA-256. Its base model has an immutable 40-character Hub revision. The adapter configuration must name that base and declare LoRA. The selected evaluation and seed report must identify the exported adapter's actual hash; the other seed retains its own adapter hash.
+
+Measured evaluation reports use `openjev-phase1-evaluation-v1` with `provenance_verified: true`, exact `inputs.gold_sha256` and `inputs.predictions_sha256`, matching base/adapter/seed identity, and finite held-out test metrics. Packaging preserves these fields rather than replacing them with claimed training-run values. Only aggregate reports are published; hashed raw evidence remains in the authorized local evidence store.

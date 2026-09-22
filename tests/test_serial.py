@@ -1,4 +1,6 @@
-from openjev_phase1.serial import _state_prefix
+import pytest
+
+from openjev_phase1.serial import SerialPrefixScorer, _state_prefix
 
 
 class Tokenizer:
@@ -16,3 +18,12 @@ def test_state_prefix_stops_before_runtime_question_and_options():
     assert "owned state" in prefix
     assert "prefix boundary placeholder" not in prefix
     assert '"options"' not in prefix
+
+
+def test_cached_serial_is_rejected_before_model_or_gpu_access():
+    class Model:
+        def parameters(self):
+            raise AssertionError("cache guard must run before model access")
+
+    with pytest.raises(RuntimeError, match="5/777"):
+        SerialPrefixScorer(Model(), object(), {})

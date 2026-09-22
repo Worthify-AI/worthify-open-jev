@@ -1,0 +1,23 @@
+{
+  "version": "openjev-evaluation-v1",
+  "join_key": "id",
+  "missing_prediction_policy": "error",
+  "extra_prediction_policy": "error",
+  "duplicate_id_policy": "error",
+  "primary_metric": "mean macro F1 across classification and evidence",
+  "metrics": ["accuracy", "macro_f1", "brier", "ece_10_bin"],
+  "probability_status": "uncalibrated conditional option scores",
+  "bootstrap": {
+    "samples": 1000,
+    "seed": 217,
+    "unit": "source group",
+    "stratify_by": "task"
+  },
+  "selection": {
+    "split": "validation",
+    "quality_tolerance_absolute": 0.01,
+    "rule": "fastest warm median per-row candidate within tolerance of best mean macro F1",
+    "requires_tasks": ["classification", "evidence"],
+    "test_metrics_used": false
+  }
+}

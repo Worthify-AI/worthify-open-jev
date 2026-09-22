@@ -1,0 +1,11 @@
+{
+  "protocol": "comparison-validation-v1",
+  "per_task": 512,
+  "rows": 1024,
+  "source_sha256": {
+    "clinc150-validation.jsonl": "632ffa50580b5799eec470539abbdd514f9d7478e0177bbdecc5b5a3abb43f04",
+    "wanli-validation.jsonl": "67374b3ce0479bd869c652e245b4a52cbda6f8a1793c4a4ad1cc97d3d35093eb"
+  },
+  "sha256": "51986016d4b19fe2d3fe3d723ab5532b4a69f2dcb4ed838b86d5be0b453373da",
+  "selection": "round-robin semantic gold labels, stable SHA-256 row ordering; no predictions used"
+}

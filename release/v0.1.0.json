@@ -1,0 +1,20 @@
+{
+  "schema": "openjev-phase1-release-index-v1",
+  "state": "pending_training",
+  "candidates": [
+    {
+      "recipe": "classification",
+      "seed": null,
+      "private_repo_id": null,
+      "public_repo_id": null,
+      "revision": null
+    },
+    {
+      "recipe": "evidence",
+      "seed": null,
+      "private_repo_id": null,
+      "public_repo_id": null,
+      "revision": null
+    }
+  ]
+}

@@ -6,3 +6,17 @@ results*.jsonl
 reranker-results*.jsonl
 models/
 cache/
+
+# Worthify local datasets, experiments, and credentials
+data/
+runs/
+artifacts/
+.env
+.env.*
+*.safetensors
+*.pt
+*.bin
+
+.venv
+.playwright-mcp/
+*.egg-info/

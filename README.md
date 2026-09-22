@@ -1,3 +1,23 @@
+# Worthify OpenJev — Gemma recipes
+
+A Worthify extension of [bonsai/openjev](https://github.com/bonsai/openjev), preserving its Jev-style runtime decision interface and upstream attribution. Development is in progress: **no Worthify-trained adapters or benchmark wins have been released yet**.
+
+The release adds two reproducible LoRA recipes: text classification/routing and evidence judgments. Inputs contain evidence, a runtime criterion, and 2–16 described options; outputs are conditional option scores without generated answer text. These scores are not calibrated confidence.
+
+- [Training recipes](docs/RECIPES.md)
+- [Cache validation](docs/CACHE_VALIDATION.md)
+- [Release and mirroring](docs/RELEASE.md)
+- [Model revisions](manifests/gemma-models.json)
+- [Licensing and attribution](THIRD_PARTY_WORTHIFY.md)
+
+GitLab is authoritative; GitHub is the public release mirror. Model adapters and their evidence will be published under Worthify's Hugging Face organization. Base models, private data, and credentials do not belong in this repository.
+
+The following README and its results are retained from the pinned upstream baseline. They describe upstream measurements, not new Worthify results.
+
+Worthify release scoring disables cached serial and shared paths after equivalence testing found 5 and 6 decision flips, respectively, across 777 Qwen decisions relative to fresh direct scoring. Use direct scoring for release outputs.
+
+---
+
 # OpenJev
 
 <div align="center">

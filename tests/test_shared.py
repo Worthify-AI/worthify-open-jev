@@ -1,6 +1,6 @@
 import pytest
 
-from openjev_phase1.shared import _suffix_layout
+from openjev_phase1.shared import _suffix_layout, score_shared
 
 
 def test_suffix_padding_follows_real_tokens():
@@ -14,3 +14,12 @@ def test_suffix_padding_follows_real_tokens():
 def test_empty_suffix_is_rejected():
     with pytest.raises(ValueError):
         _suffix_layout([[1], []], 7, 0)
+
+
+def test_cached_shared_is_rejected_before_model_or_gpu_access():
+    class Model:
+        def parameters(self):
+            raise AssertionError("cache guard must run before model access")
+
+    with pytest.raises(RuntimeError, match="6/777"):
+        score_shared(Model(), object(), [], {})

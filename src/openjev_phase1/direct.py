@@ -23,7 +23,8 @@ def _slot_ids(tokenizer, count: int) -> list[int]:
 
 
 def _forward(model, inputs):
-    parameters = inspect.signature(model.forward).parameters
+    base_model = model.get_base_model() if hasattr(model, "get_base_model") else model
+    parameters = inspect.signature(base_model.forward).parameters
     kwargs = dict(inputs, use_cache=False, return_dict=True)
     if "logits_to_keep" in parameters:
         kwargs["logits_to_keep"] = 1
@@ -57,6 +58,7 @@ def score(model, tokenizer, row: dict, metadata: dict, max_tokens: int = 4096) -
     }
     if device.type == "cuda":
         torch.cuda.synchronize(device)
+        torch.cuda.reset_peak_memory_stats(device)
     forward_start = time.perf_counter()
     with torch.inference_mode():
         vocabulary = _forward(model, inputs)[0].float()
@@ -69,6 +71,7 @@ def score(model, tokenizer, row: dict, metadata: dict, max_tokens: int = 4096) -
         "probabilities": softmax(selected),
         "option_logits": selected,
         "input_tokens": len(ids),
+        "peak_memory_bytes": torch.cuda.max_memory_allocated(device) if device.type == "cuda" else None,
         "forward_seconds": time.perf_counter() - forward_start,
         "total_seconds": time.perf_counter() - started,
         "prompt_sha256": prompt_hash,

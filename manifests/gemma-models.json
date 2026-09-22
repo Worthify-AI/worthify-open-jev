@@ -1,0 +1,22 @@
+{
+  "resolved_at": "2026-09-22T11:17:31.292064+00:00",
+  "upstream": "53e3028363509f8533d90fe82d983770da1f6c02",
+  "models": {
+    "google/gemma-4-12B-it": {
+      "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "license": "apache-2.0"
+    },
+    "google/gemma-4-26B-A4B-it": {
+      "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+      "license": "apache-2.0"
+    },
+    "google/gemma-4-31B-it": {
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "license": "apache-2.0"
+    },
+    "Qwen/Qwen3.5-4B": {
+      "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a",
+      "purpose": "upstream reproduction"
+    }
+  }
+}

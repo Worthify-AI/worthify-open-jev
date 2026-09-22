@@ -1,0 +1,20 @@
+{
+  "dataset": "CLINC150",
+  "converter": "openjev_phase1.datasets:convert_clinc150",
+  "source": {
+    "url": "https://raw.githubusercontent.com/clinc/oos-eval/828f8093932c8fe6ca7936c3d2e52903b1c523de/data/data_full.json",
+    "revision": "828f8093932c8fe6ca7936c3d2e52903b1c523de",
+    "sha256": "36923c3705a59e08fe9c3883d8bc2dd966ef93e22cb78ac41171782a698d56e0",
+    "license": "CC-BY-3.0"
+  },
+  "seed": 291607,
+  "max_train_rows": 20000,
+  "option_counts": [2, 4, 8, 16],
+  "unseen_intent_labels": {
+    "validation": 15,
+    "test": 15
+  },
+  "oos_gold_option_id": "none_of_above",
+  "grouping": "NFKC case-folded alphanumeric text",
+  "official_test_may_enter_train": false
+}
