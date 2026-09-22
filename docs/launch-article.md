@@ -22,13 +22,13 @@ We will report the frozen base and the tuned adapter side by side on the same he
 
 The groundwork has passed two limited checks. A pinned Qwen baseline reproduction matched all 252 published quality decisions, which verifies the evaluation path. A 64-row Gemma 4 12B training pilot loaded, trained, exported, and reloaded its adapter successfully. The pilot tested compatibility and timing; it did not select the winning base, measure full training, or establish a quality improvement.
 
-The final candidate comparison and all four full training runs are still pending. Cached prefix and shared-state scoring are disabled for Worthify release measurements because equivalence testing found decision changes against fresh direct scoring. Release results will use fresh direct scoring. Returned probabilities are conditional on the supplied options and are not calibrated confidence values; deployment teams must validate and calibrate them for their own workload and decision costs.
+Both recipes use Gemma 4 12B at a pinned revision. This first release focuses on that base and does not claim it won a completed comparison against larger models. The four full training runs are in progress. Cached prefix and shared-state scoring are disabled for Worthify release measurements because equivalence testing found decision changes against fresh direct scoring. Release results will use fresh direct scoring. Returned probabilities are conditional on the supplied options and are not calibrated confidence values; deployment teams must validate and calibrate them for their own workload and decision costs.
 
 ## Release evidence to insert after review
 
 Before publication, replace this block from the checksummed release manifests and reviewed aggregate reports:
 
-- **Selected base candidate:** `[MODEL ID @ IMMUTABLE REVISION]`
+- **Base:** `google/gemma-4-12B-it @ 707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7`
 - **Classification:** `frozen [METRIC]; tuned seed 42 [METRIC]; tuned seed 43 [METRIC]; selected seed [42/43] by validation macro-F1`
 - **Evidence judgments:** `frozen [METRIC]; tuned seed 42 [METRIC]; tuned seed 43 [METRIC]; selected seed [42/43] by validation macro-F1`
 - **Public adapters:** `Worthify/[CLASSIFICATION REPO] @ [40-CHAR COMMIT]`; `Worthify/[EVIDENCE REPO] @ [40-CHAR COMMIT]`

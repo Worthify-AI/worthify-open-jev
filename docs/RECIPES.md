@@ -102,6 +102,26 @@ done
 
 Local adapters require an explicit revision marker; remote adapters require their immutable 40-character Hugging Face commit. Packaging verifies prediction provenance and adapter hashes. Seed selection uses validation performance only. Public release requires both recipes, both seed reports, baseline comparisons, and the checks in [RELEASE.md](RELEASE.md).
 
+Measure each frozen baseline on the same A100, after training has released it:
+
+```bash
+for RECIPE in classification evidence; do
+  case "$RECIPE" in classification) DATASET=clinc150 ;; evidence) DATASET=wanli ;; esac
+  CUDA_VISIBLE_DEVICES="$GPU" openjev-score --mode direct \
+    --model "$MODEL" --revision "$REVISION" --quantization nf4 \
+    --input "$WORK/datasets/$DATASET-test.jsonl" \
+    --output "$WORK/$RECIPE-frozen-predictions.jsonl" \
+    --cache-dir "$CACHE" --max-tokens 2048 --warmup 3
+  python benchmarks/evaluate_frozen.py \
+    --gold "$WORK/datasets/$DATASET-test.jsonl" \
+    --predictions "$WORK/$RECIPE-frozen-predictions.jsonl" \
+    --output "$WORK/$RECIPE-frozen-metrics.json" \
+    --model "$MODEL" --revision "$REVISION"
+done
+```
+
+The frozen evaluator verifies the pinned base and absence of an adapter before applying the same metric implementation. Keep other workloads off the measured GPU for both frozen and tuned timing.
+
 ## Use your own data
 
 Create separate training, validation, and test JSONL files. Each line follows this schema:
