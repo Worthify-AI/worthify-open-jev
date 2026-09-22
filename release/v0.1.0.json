@@ -5,15 +5,15 @@
     {
       "recipe": "classification",
       "seed": null,
-      "private_repo_id": null,
-      "public_repo_id": null,
+      "private_repo_id": "Worthify/worthify-jev-candidate-classification",
+      "public_repo_id": "Worthify/worthify-jev-classification",
       "revision": null
     },
     {
       "recipe": "evidence",
       "seed": null,
-      "private_repo_id": null,
-      "public_repo_id": null,
+      "private_repo_id": "Worthify/worthify-jev-candidate-evidence",
+      "public_repo_id": "Worthify/worthify-jev-evidence",
       "revision": null
     }
   ]

@@ -1,0 +1,95 @@
+{
+  "adapter": {
+    "alpha": 32,
+    "dropout": 0.05,
+    "rank": 16,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ]
+  },
+  "adapter_reload_verification": {
+    "examples": 8,
+    "max_abs_logit_error": 0.0,
+    "tolerance": 0.0001
+  },
+  "code_revision": "58608f3c69a78f45dcff17030fc4d17b1c583ff5",
+  "effective_batch_size": 16,
+  "epochs": 1,
+  "estimate": {
+    "evidence_two_epochs_training_hours": 8.138685693281175,
+    "excludes": "Full validation, final evaluation, publication, and differences in full-data sequence lengths. Larger model candidates require their own timing."
+  },
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "input_hashes": {
+    "effective_batch_size": 16,
+    "learning_rate": 0.0002,
+    "max_tokens": 2048,
+    "model": "google/gemma-4-12B-it",
+    "quantization": "nf4",
+    "recipe": {
+      "dataset": "WANLI",
+      "digest": "f3aa3dbcfe34a8050c4153b93ddb20a996e389c8ec46220736cb8c992b23d598",
+      "task": "evidence",
+      "version": "openjev-training-recipe-v1"
+    },
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "seed": 42,
+    "train_sha256": "988b0cd116b83e13aefc4216dc6d01d823e941ab2e61cef1278b9c448224084f",
+    "validation_sha256": "d287ba945b4f4396eee6204a6a20fe4de224318a4bd8b907652d3f1f1e1b3811"
+  },
+  "learning_rate": 0.0002,
+  "max_tokens": 2048,
+  "median_training_examples_per_second": 1.3650852752762979,
+  "model": {
+    "bitsandbytes_version": "0.50.2",
+    "dtype": "bfloat16",
+    "peft_version": "0.21.0",
+    "quantization": "nf4",
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "source": "google/gemma-4-12B-it",
+    "torch_version": "2.10.0+cu128",
+    "transformers_version": "5.17.0",
+    "use_cache": false
+  },
+  "optimizer_steps": [
+    {
+      "elapsed_seconds": 27.75661329785362,
+      "epoch": 0,
+      "examples_per_second": 1.3433628225115937,
+      "loss": 4.252040386199951,
+      "optimizer_step": 1
+    },
+    {
+      "elapsed_seconds": 39.29402263369411,
+      "epoch": 0,
+      "examples_per_second": 1.3868077280410023,
+      "loss": 4.252442836761475,
+      "optimizer_step": 2
+    },
+    {
+      "elapsed_seconds": 50.48520315205678,
+      "epoch": 0,
+      "examples_per_second": 1.4297089415096391,
+      "loss": 4.943584442138672,
+      "optimizer_step": 3
+    },
+    {
+      "elapsed_seconds": 63.12147379759699,
+      "epoch": 0,
+      "examples_per_second": 1.2662043235326677,
+      "loss": 0.2066575586795807,
+      "optimizer_step": 4
+    }
+  ],
+  "peak_cuda_memory_bytes": 10403634688,
+  "purpose": "Compatibility and timing only; not a release adapter, base-model selection, or quality-improvement claim.",
+  "schema": "worthify-jev-training-pilot-v1",
+  "seed": 42,
+  "train_rows": 64,
+  "trainable_parameter_count": 21331968,
+  "training_seconds": 68.4854261786677,
+  "validation_rows": 16
+}

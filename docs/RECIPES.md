@@ -7,6 +7,7 @@ Train two separate adapters on the same pinned base: classification/routing and 
 ```bash
 python3 -m venv .venv
 . .venv/bin/activate
+pip install torch==2.10.0 --index-url https://download.pytorch.org/whl/cu128
 pip install -e '.[test,train]'
 export WORK="$PWD/runs/tutorial-v1"
 export CACHE="$WORK/hf-cache"

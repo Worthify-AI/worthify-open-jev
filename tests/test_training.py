@@ -153,6 +153,7 @@ def test_training_exports_best_adapter_and_saves_latest_resume_state(tmp_path, m
     monkeypatch.setattr(torch.cuda, "reset_peak_memory_stats", lambda: None)
     monkeypatch.setattr(torch.cuda, "max_memory_allocated", lambda: 0)
     monkeypatch.setattr(torch.cuda, "get_rng_state_all", lambda: [])
+    monkeypatch.setattr(torch.cuda, "is_current_stream_capturing", lambda: False)
     train_path, validation_path = tmp_path / "train.jsonl", tmp_path / "validation.jsonl"
     train_path.write_text(json.dumps(ROW) + "\n")
     validation_path.write_text(json.dumps({**ROW, "id": "validation", "state": "other"}) + "\n")
