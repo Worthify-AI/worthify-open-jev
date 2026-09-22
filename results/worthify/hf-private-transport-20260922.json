@@ -1,0 +1,9 @@
+{
+  "repo_id": "Worthify/worthify-jev-upload-test",
+  "revision": "5c6eda33c31f721534f9a941430ab715491c81da",
+  "hashes": {
+    "README.md": "a0a5b9fc5b730e9e5bf8d30bcad1922d54f67f6f618582da302f5bdfd1425868",
+    "smoke-payload.json": "959a0edc421954c7ec21b262fa1e210b179ba5448a0af9f23e91f1891b01c3ec",
+    "SHA256SUMS": "249bd4c1ce1e06f61aa647b635cc8f4610ec1985168abafc669c77476a8914e7"
+  }
+}

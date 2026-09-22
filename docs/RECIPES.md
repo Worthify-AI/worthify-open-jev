@@ -52,13 +52,18 @@ for RECIPE in classification evidence; do
       --model "$MODEL" --revision "$REVISION" --seed "$SEED" \
       --quantization nf4 --cache-dir "$CACHE" --max-tokens 2048 \
       --effective-batch-size 16 --epochs 2
+    CUDA_VISIBLE_DEVICES="$GPU" python scripts/verify-adapter-reload.py \
+      --run-dir "$WORK/runs/$RECIPE/seed$SEED" \
+      --validation "$WORK/datasets/$DATASET-validation.jsonl" \
+      --cache-dir "$CACHE" \
+      --output "$WORK/runs/$RECIPE/seed$SEED/fresh-reload-verification.json"
   done
 done
 ```
 
 Defaults are attention-only rank-16 LoRA, NF4/BF16, learning rate `2e-4`, and two epochs. Loss is computed only over the declared option logits at the final prompt position. The gold target is recomputed after option shuffling. Each run writes resumable epoch checkpoints, a validation-selected `final-adapter/`, and a manifest. Independent recipes/seeds can run on different GPUs with separate output paths.
 
-The two recipe files validate task and source-dataset identity. Their hashes are recorded with each run. Omit `--recipe` when substituting your own labeled JSONL; the same default hyperparameters still apply. Progress records include processed examples and elapsed training time, and a successful export includes an adapter reload equivalence check on validation rows.
+The two recipe files validate task and source-dataset identity. Their hashes are recorded with each run. Omit `--recipe` when substituting your own labeled JSONL; the same default hyperparameters still apply. Progress records include processed examples and elapsed training time. The separate verification command loads the base and exported adapter in a fresh process, then compares their option logits against the saved training-process reference on eight validation rows. Both training and inference preserve the native BF16 base parameters, with BF16 computation inside NF4 layers and FP32 trainable LoRA parameters.
 
 ## Evaluate and package both adapters
 

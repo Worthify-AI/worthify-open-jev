@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import importlib.metadata
 import json
 import random
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Iterable
@@ -21,6 +23,35 @@ APPROVED_DEFAULTS = {
     "lora_alpha": 32, "lora_dropout": 0.05,
     "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
 }
+
+
+def _source_provenance() -> dict:
+    """Snapshot executable source and runtime identity before a model is loaded."""
+    root = Path(__file__).resolve().parents[2]
+    source_root = root / "src" / "openjev_phase1"
+    source_sha256s = {}
+    for path in sorted(source_root.glob("*.py")):
+        source_sha256s[str(path.relative_to(root))] = hashlib.sha256(path.read_bytes()).hexdigest()
+
+    def git_output(*command: str) -> str:
+        try:
+            return subprocess.run(command, cwd=root, check=False, capture_output=True,
+                                  text=True).stdout.strip()
+        except OSError:
+            return ""
+
+    versions = {"python": sys.version.split()[0]}
+    for package in ("torch", "transformers", "peft", "bitsandbytes"):
+        try:
+            versions[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            versions[package] = "unavailable"
+    return {
+        "git_head": git_output("git", "rev-parse", "HEAD") or "unavailable",
+        "git_dirty": bool(git_output("git", "status", "--porcelain", "--untracked-files=no")),
+        "source_sha256s": source_sha256s,
+        "runtime_versions": versions,
+    }
 
 
 def load_recipe(path: Path) -> dict:
@@ -195,8 +226,11 @@ def _validate_splits(train_rows: list[dict], validation_rows: list[dict]) -> Non
 def _configure_lora(model, quantization: str):
     import peft
 
-    if quantization == "nf4":
-        model = peft.prepare_model_for_kbit_training(model, use_gradient_checkpointing=False)
+    # PEFT's prepare_model_for_kbit_training upcasts every non-4-bit BF16 base
+    # parameter to FP32.  Keep the native BF16 base used by fresh adapter loads;
+    # explicit freezing and non-reentrant checkpointing cover its needed behavior.
+    for parameter in model.parameters():
+        parameter.requires_grad_(False)
     model.config.use_cache = False
     configured = peft.get_peft_model(model, peft.LoraConfig(
         r=16, lora_alpha=32, lora_dropout=0.05, bias="none", task_type="CAUSAL_LM",
@@ -274,6 +308,31 @@ def _adapter_reload_error(model, tokenizer, rows: list[dict], max_tokens: int, a
     return float((before[declared] - after[declared]).abs().max().item())
 
 
+def _reload_reference(model, tokenizer, rows: list[dict], max_tokens: int) -> dict:
+    """Record only fixed validation option logits for a fresh-loader proof."""
+    import torch
+
+    subset = rows[: min(8, len(rows))]
+    examples = [(row, next(i for i, option in enumerate(row["options"])
+                           if option["id"] == row["gold_option_id"])) for row in subset]
+    model.eval()
+    with torch.no_grad():
+        _, logits, _ = batch_loss(model, tokenizer, examples, max_tokens)
+    reference_rows = []
+    for index, row in enumerate(subset):
+        count = len(row["options"])
+        declared = logits[index, :count]
+        if not torch.isfinite(declared).all():
+            raise RuntimeError("Reload reference contains nonfinite declared option logits")
+        reference_rows.append({
+            "id": row["id"],
+            "option_ids": [option["id"] for option in row["options"]],
+            "logits": [float(value) for value in declared.cpu()],
+        })
+    return {"schema": "openjev-phase1-adapter-reload-reference-v1", "max_tokens": max_tokens,
+            "tolerance": 1e-4, "rows": reference_rows}
+
+
 def train(args) -> dict:
     import torch
 
@@ -291,12 +350,14 @@ def train(args) -> dict:
     _validate_recipe_rows(train_rows, recipe)
     _validate_recipe_rows(validation_rows, recipe)
     _validate_splits(train_rows, validation_rows)
+    source_provenance = _source_provenance()
     training_spec = {"model": args.model, "revision": args.revision,
                      "train_sha256": hashlib.sha256(train_bytes).hexdigest(),
                      "validation_sha256": hashlib.sha256(validation_bytes).hexdigest(),
                      "seed": args.seed, "quantization": args.quantization,
                      "max_tokens": args.max_tokens, "effective_batch_size": args.effective_batch_size,
                      "learning_rate": 2e-4,
+                     "source_provenance": source_provenance,
                      "recipe": None if recipe is None else {key: recipe[key] for key in ("digest", "task", "dataset", "version")}}
     started = time.monotonic()
     random.seed(args.seed)
@@ -360,25 +421,28 @@ def train(args) -> dict:
     model.eval()
     final = args.output / "final-adapter"
     final.mkdir(exist_ok=False)
+    reload_reference = _reload_reference(model, tokenizer, validation_rows, args.max_tokens)
     model.save_pretrained(final)
+    reference_path = final / "reload-reference.json"
+    reference_path.write_text(json.dumps(reload_reference, indent=2, sort_keys=True) + "\n")
     reload_error = _adapter_reload_error(model, tokenizer, validation_rows, args.max_tokens, final)
     reload_tolerance = 1e-4
     if reload_error > reload_tolerance:
         raise RuntimeError(f"Adapter reload changed fixed validation logits by {reload_error}")
     dataset_hash = hashlib.sha256(train_bytes + validation_bytes).hexdigest()
-    code_revision = subprocess.run(
-        ["git", "rev-parse", "HEAD"], check=False, capture_output=True, text=True
-    ).stdout.strip() or "unavailable"
     manifest = {"model": metadata, "training_spec": training_spec, "seed": args.seed, "epochs": args.epochs, "max_tokens": args.max_tokens,
                 "effective_batch_size": args.effective_batch_size, "learning_rate": 2e-4,
                 "best_validation_macro_f1": best_f1, "best_epoch": best_epoch,
                 "validation_checkpoint": str(best_checkpoint), "dataset_sha256": dataset_hash,
-                "code_revision": code_revision, "training_seconds": time.monotonic() - started,
+                "code_revision": source_provenance["git_head"], "source_provenance": source_provenance,
+                "training_seconds": time.monotonic() - started,
                 "peak_cuda_memory_bytes": torch.cuda.max_memory_allocated(),
                 "trainable_parameter_count": trainable_parameter_count,
                 "adapter_reload_verification": {"examples": min(8, len(validation_rows)),
                                                   "max_abs_logit_error": reload_error,
                                                   "tolerance": reload_tolerance},
+                "fresh_reload_reference": {"path": str(reference_path.relative_to(args.output)),
+                                             "sha256": hashlib.sha256(reference_path.read_bytes()).hexdigest()},
                 "adapter": {"rank": 16, "alpha": 32, "dropout": 0.05, "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"]}}
     (args.output / "manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     return manifest

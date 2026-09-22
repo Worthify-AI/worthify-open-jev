@@ -160,6 +160,11 @@ def test_training_exports_best_adapter_and_saves_latest_resume_state(tmp_path, m
     model = _CheckpointModel()
     monkeypatch.setattr(training, "load_causal_model", lambda *args, **kwargs: (model, _Tokenizer(), {}))
     monkeypatch.setattr(training, "_configure_lora", lambda model, quantization: (model, "test"))
+    provenance = {"git_head": "b" * 40, "git_dirty": False,
+                  "source_sha256s": {"src/openjev_phase1/training.py": "c" * 64},
+                  "runtime_versions": {"python": "3.12.0", "torch": "test",
+                                       "transformers": "test", "peft": "test", "bitsandbytes": "test"}}
+    monkeypatch.setattr(training, "_source_provenance", lambda: provenance)
     monkeypatch.setattr(training, "batch_loss", lambda model, *args: (
         model.weight ** 2, torch.stack([model.weight, model.weight + 1]).view(1, 2), torch.tensor([0])))
     scores = iter([.9, .5])
@@ -178,6 +183,15 @@ def test_training_exports_best_adapter_and_saves_latest_resume_state(tmp_path, m
     state = torch.load(output / "checkpoint-epoch-01/state.pt", weights_only=False)
     assert state["epoch"] == 1 and state["best_epoch"] == 0
     assert manifest["adapter_reload_verification"]["max_abs_logit_error"] == 0.
+    assert manifest["source_provenance"] == provenance
+    assert state["training_spec"]["source_provenance"] == provenance
+    reference = json.loads((output / "final-adapter/reload-reference.json").read_text())
+    assert reference["schema"] == "openjev-phase1-adapter-reload-reference-v1"
+    assert reference["max_tokens"] == 20 and reference["tolerance"] == 1e-4
+    assert reference["rows"][0]["id"] == "validation"
+    assert reference["rows"][0]["option_ids"] == ["a", "b"]
+    assert torch.isfinite(torch.tensor(reference["rows"][0]["logits"])).all()
+    assert manifest["fresh_reload_reference"]["path"] == "final-adapter/reload-reference.json"
 
 
 def test_recipe_defaults_preserve_explicit_choice_and_reject_data_mismatch(tmp_path):
@@ -221,7 +235,7 @@ def test_reload_sets_new_modules_to_evaluation_mode(tmp_path, monkeypatch):
     assert training._adapter_reload_error(model, _Tokenizer(), [ROW], 20, tmp_path) == 0.
 
 
-def test_native_unified_lora_backward_with_frozen_embeddings(monkeypatch):
+def test_native_unified_lora_preserves_bfloat16_base_and_backward_with_frozen_embeddings(monkeypatch):
     pytest.importorskip("peft")
     from transformers import Gemma4UnifiedForCausalLM, Gemma4UnifiedTextConfig
 
@@ -231,8 +245,12 @@ def test_native_unified_lora_backward_with_frozen_embeddings(monkeypatch):
         num_global_key_value_heads=1, max_position_embeddings=64,
         layer_types=["sliding_attention", "full_attention"],
     )
-    base = Gemma4UnifiedForCausalLM(config)
-    model, _ = training._configure_lora(base, "none")
+    base = Gemma4UnifiedForCausalLM(config).to(dtype=torch.bfloat16)
+    assert {parameter.dtype for parameter in base.parameters()} == {torch.bfloat16}
+    model, _ = training._configure_lora(base, "nf4")
+    base_parameters = [parameter for name, parameter in model.named_parameters() if ".lora_" not in name]
+    assert base_parameters and {parameter.dtype for parameter in base_parameters} == {torch.bfloat16}
+    assert all(not parameter.requires_grad for parameter in base_parameters)
     monkeypatch.setattr(training, "encode_prompt", lambda _, row, __: (row["tokens"], [7, 9], "hash"))
     examples = [({"tokens": [2, 3]}, 0), ({"tokens": [2, 4, 5, 6]}, 1)]
     model.eval()

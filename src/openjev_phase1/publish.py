@@ -34,6 +34,8 @@ ALLOWED_FILES = frozenset(
     }
 )
 SEED_RESULT_FILE = re.compile(r"^seed-[0-9]+-benchmark-results\.json$")
+SEED_RELOAD_REFERENCE_FILE = re.compile(r"^seed-[0-9]+-reload-reference\.json$")
+SEED_RELOAD_RECEIPT_FILE = re.compile(r"^seed-[0-9]+-fresh-reload-verification\.json$")
 REQUIRED_FILES = frozenset(
     {
         "adapter_model.safetensors",
@@ -86,7 +88,9 @@ def _checksums(path: Path) -> dict[str, str]:
 
 def _allowed_name(name: str) -> bool:
     """Keep uploads closed while allowing one small evidence file per seed."""
-    return name in ALLOWED_FILES or bool(SEED_RESULT_FILE.fullmatch(name))
+    return name in ALLOWED_FILES or any(pattern.fullmatch(name) for pattern in (
+        SEED_RESULT_FILE, SEED_RELOAD_REFERENCE_FILE, SEED_RELOAD_RECEIPT_FILE,
+    ))
 
 
 def _required_string(value: Any, field: str) -> str:
@@ -135,6 +139,50 @@ def _validate_training_recipe(training: dict, recipe: str) -> None:
         raise ValueError("Training recipe does not match the requested release recipe")
     if declared.get("version") != "openjev-training-recipe-v1" or not isinstance(declared.get("digest"), str) or not SHA256.fullmatch(declared["digest"]):
         raise ValueError("Training recipe must preserve its version and content digest")
+
+
+def _seeded_filename(pattern: re.Pattern[str], path: str, seed: int, field: str) -> None:
+    if not pattern.fullmatch(path) or int(path.split("-", 2)[1]) != seed:
+        raise ValueError(f"{field} must be an allowed file for seed {seed}")
+
+
+def _validate_reload_reference(reference: dict[str, Any]) -> None:
+    if set(reference) != {"schema", "max_tokens", "tolerance", "rows"} or reference.get("schema") != "openjev-phase1-adapter-reload-reference-v1":
+        raise ValueError("Reload reference has an unsupported schema")
+    if type(reference.get("max_tokens")) is not int or reference["max_tokens"] < 1 or reference.get("tolerance") != 1e-4:
+        raise ValueError("Reload reference has invalid verification settings")
+    rows = reference.get("rows")
+    if not isinstance(rows, list) or not 1 <= len(rows) <= 8:
+        raise ValueError("Reload reference must contain one to eight rows")
+    row_ids: set[str] = set()
+    for row in rows:
+        if set(row) != {"id", "option_ids", "logits"} or not isinstance(row.get("id"), str) or not row["id"]:
+            raise ValueError("Reload reference must contain only row and option IDs with logits")
+        if row["id"] in row_ids:
+            raise ValueError("Reload reference row IDs must be unique")
+        row_ids.add(row["id"])
+        option_ids, logits = row.get("option_ids"), row.get("logits")
+        if not isinstance(option_ids, list) or not 2 <= len(option_ids) <= 16 or len(set(option_ids)) != len(option_ids) or not all(isinstance(value, str) and value for value in option_ids):
+            raise ValueError("Reload reference option IDs are invalid")
+        if not isinstance(logits, list) or len(logits) != len(option_ids) or not all(type(value) in (int, float) and math.isfinite(value) for value in logits):
+            raise ValueError("Reload reference logits are invalid")
+
+
+def _validate_reload_receipt(receipt: dict[str, Any], reference_sha: str, *, seed: int, adapter_sha: str,
+                             base: dict[str, Any], validation_sha: str, reference: dict[str, Any]) -> None:
+    if receipt.get("schema") != "openjev-phase1-fresh-adapter-reload-v1" or receipt.get("passed") is not True:
+        raise ValueError("Fresh reload receipt must report a passing verification")
+    if receipt.get("seed") != seed or receipt.get("adapter_sha256") != adapter_sha:
+        raise ValueError("Fresh reload receipt does not match its seed and adapter")
+    if receipt.get("base_model") != {"source": base["id"], "revision": base["revision"]}:
+        raise ValueError("Fresh reload receipt does not match the pinned base")
+    if receipt.get("validation_sha256") != validation_sha or receipt.get("reference_sha256") != reference_sha:
+        raise ValueError("Fresh reload receipt does not match its validation input and reference")
+    if receipt.get("examples") != len(reference["rows"]) or receipt.get("tolerance") != reference["tolerance"]:
+        raise ValueError("Fresh reload receipt does not match its reference settings")
+    error = receipt.get("max_abs_logit_error")
+    if type(error) not in (int, float) or not math.isfinite(error) or error < 0 or error > receipt["tolerance"]:
+        raise ValueError("Fresh reload receipt has an invalid logit error")
 
 
 def validate_release(artifact_dir: Path) -> dict[str, str]:
@@ -253,6 +301,40 @@ def validate_release(artifact_dir: Path) -> dict[str, str]:
         raise ValueError("The selected seed report must link the exported adapter hash")
     if manifest["kind"] == "measured" and report_seeds != {42, 43}:
         raise ValueError("Measured releases require results for seeds 42 and 43")
+    proofs = manifest.get("fresh_reload_proofs")
+    if manifest["kind"] == "measured" and (not isinstance(proofs, list) or len(proofs) != 2):
+        raise ValueError("Measured releases require fresh reload proofs for seeds 42 and 43")
+    proof_seeds: set[int] = set()
+    for proof in proofs or []:
+        if not isinstance(proof, dict):
+            raise ValueError("Each fresh reload proof must be an object")
+        seed = proof.get("seed")
+        if seed not in report_seeds or seed in proof_seeds:
+            raise ValueError("Fresh reload proofs must cover each benchmark seed once")
+        reference_path, reference_sha = _provenance(proof, "reference")
+        receipt_path, receipt_sha = _provenance(proof, "receipt")
+        _seeded_filename(SEED_RELOAD_REFERENCE_FILE, reference_path, seed, "reference.path")
+        _seeded_filename(SEED_RELOAD_RECEIPT_FILE, receipt_path, seed, "receipt.path")
+        if hashes.get(reference_path) != reference_sha or hashes.get(receipt_path) != receipt_sha:
+            raise ValueError("Fresh reload proof does not link its evidence files")
+        validation_sha = proof.get("validation_sha256")
+        if not isinstance(validation_sha, str) or not SHA256.fullmatch(validation_sha):
+            raise ValueError("Fresh reload proof must identify its validation input")
+        reference = _load_json(files[reference_path])
+        _validate_reload_reference(reference)
+        receipt = _load_json(files[receipt_path])
+        report = _load_json(files[f"seed-{seed}-benchmark-results.json"])
+        _validate_reload_receipt(receipt, reference_sha, seed=seed, adapter_sha=report["adapter_sha256"],
+                                 base=base, validation_sha=validation_sha, reference=reference)
+        if seed == selected_seed and validation_sha != _load_json(files["training-manifest.json"])["training_spec"]["validation_sha256"]:
+            raise ValueError("Selected fresh reload proof does not match the training validation input")
+        if seed == selected_seed and _load_json(files["training-manifest.json"]).get("fresh_reload_reference") != {
+            "path": reference_path, "sha256": reference_sha
+        }:
+            raise ValueError("Selected training manifest does not link its packaged fresh reload reference")
+        proof_seeds.add(seed)
+    if manifest["kind"] == "measured" and proof_seeds != {42, 43}:
+        raise ValueError("Measured releases require fresh reload proofs for seeds 42 and 43")
     return hashes
 
 
@@ -447,7 +529,7 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
         raise ValueError("Package output must be new and include seeds 42 and 43")
     if recipe not in {"classification", "evidence"}:
         raise ValueError("Recipe must be classification or evidence")
-    records: dict[int, tuple[Path, dict[str, Any], dict[str, Any], str]] = {}
+    records: dict[int, tuple[Path, dict[str, Any], dict[str, Any], str, dict[str, Path | str]]] = {}
     for run_dir, evaluation in zip(run_dirs, evaluations):
         training = _load_json(run_dir / "manifest.json")
         seed = training.get("seed")
@@ -469,8 +551,26 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
             raise ValueError("Training specification must identify train and validation input hashes")
         if report["inputs"]["gold_sha256"] in {spec["train_sha256"], spec["validation_sha256"]}:
             raise ValueError("Test evaluation input cannot be the training or validation input")
+        reference_path = run_dir / "final-adapter" / "reload-reference.json"
+        receipt_path = run_dir / "fresh-reload-verification.json"
+        if not reference_path.is_file() or not receipt_path.is_file():
+            raise ValueError("Each training run requires fresh reload reference and receipt")
+        reference_sha = sha256_file(reference_path)
+        fresh_reference = training.get("fresh_reload_reference")
+        if fresh_reference != {"path": "final-adapter/reload-reference.json", "sha256": reference_sha}:
+            raise ValueError("Training manifest does not link its fresh reload reference")
+        reference = _load_json(reference_path)
+        _validate_reload_reference(reference)
+        if reference["max_tokens"] != training.get("max_tokens"):
+            raise ValueError("Reload reference max tokens do not match training")
+        receipt = _load_json(receipt_path)
+        _validate_reload_receipt(receipt, reference_sha, seed=seed, adapter_sha=adapter_sha,
+                                 base=base, validation_sha=spec["validation_sha256"], reference=reference)
         public_training = {key: value for key, value in training.items() if key != "validation_checkpoint"}
-        records[seed] = (run_dir, {**public_training, "base_model": base, "adapter_sha256": adapter_sha}, {**report, "kind": "measured"}, adapter_sha)
+        records[seed] = (run_dir, {**public_training, "base_model": base, "adapter_sha256": adapter_sha}, {**report, "kind": "measured"}, adapter_sha,
+                         {"reference": reference_path, "reference_sha256": reference_sha,
+                          "receipt": receipt_path, "receipt_sha256": sha256_file(receipt_path),
+                          "validation_sha256": spec["validation_sha256"]})
     if set(records) != {42, 43}:
         raise ValueError("Both seed 42 and seed 43 runs are required")
     if records[42][1]["base_model"] != records[43][1]["base_model"] or records[42][2]["inputs"]["gold_sha256"] != records[43][2]["inputs"]["gold_sha256"]:
@@ -487,8 +587,15 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
         raise ValueError("selected_seed must be chosen by validation F1, not test results")
     output.mkdir(parents=True)
     selected = records[selected_seed]
+    selected[1]["fresh_reload_reference"] = {
+        "path": f"seed-{selected_seed}-reload-reference.json",
+        "sha256": selected[4]["reference_sha256"],
+    }
     shutil.copy2(selected[0] / "final-adapter" / "adapter_model.safetensors", output / "adapter_model.safetensors")
     shutil.copy2(selected[0] / "final-adapter" / "adapter_config.json", output / "adapter_config.json")
+    for seed, (_, _, _, _, proof) in records.items():
+        shutil.copy2(proof["reference"], output / f"seed-{seed}-reload-reference.json")
+        shutil.copy2(proof["receipt"], output / f"seed-{seed}-fresh-reload-verification.json")
     (output / "LICENSE").write_text((Path(__file__).parents[2] / "LICENSES" / "Apache-2.0.txt").read_text(encoding="utf-8"), encoding="utf-8")
     if base_notice is not None:
         if base_notice.is_symlink() or not base_notice.is_file():
@@ -497,7 +604,7 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
     data_sources = [
         {"name": "CLINC150", "license": "CC-BY-3.0", "url": "https://github.com/clinc/oos-eval", "revision": "828f8093932c8fe6ca7936c3d2e52903b1c523de", "modifications": "Converted into bounded-option OpenJev rows with governed split and leakage controls."},
         {"name": "WANLI", "license": "CC-BY-4.0", "url": "https://huggingface.co/datasets/alisawuffles/WANLI", "revision": "61c95318fd71c55b6ba355d76253254615f387ec", "modifications": "Converted from the pinned training snapshot into bounded-option evidence rows; governed external-test selections are excluded."},
-        {"name": "OpenJev interface", "license": "MIT", "url": "https://github.com/TheoLeeCJ/bonsai", "revision": "repository source", "modifications": "Worthify fine-tuned a LoRA adapter for this interface; this does not disclose or reproduce Jev training data."},
+        {"name": "OpenJev interface", "license": "MIT", "url": "https://github.com/bonsai/openjev", "revision": "53e3028363509f8533d90fe82d983770da1f6c02", "modifications": "Worthify fine-tuned a LoRA adapter for this interface; this does not disclose or reproduce Jev training data."},
     ]
     (output / "attribution.json").write_text(json.dumps({"schema": "openjev-phase1-attribution-v1", "recipe": recipe, "sources": data_sources}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     report_lines = []
@@ -517,7 +624,7 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
         + " --adapter worthify/REPLACE_WITH_REPOSITORY --adapter-revision REPLACE_WITH_40_CHARACTER_HUB_COMMIT --input decisions.jsonl --output predictions.jsonl --quantization nf4\n```\n\n"
         "Replace the adapter repository and revision placeholder with the published repository and immutable 40-character Hub commit. `attribution.json` records CLINC150 (CC-BY-3.0), WANLI (CC-BY-4.0), and interface attribution, including modifications.\n",
         encoding="utf-8")
-    for seed, (_, training, report, _) in records.items():
+    for seed, (_, training, report, _, _) in records.items():
         if seed == selected_seed:
             (output / "training-manifest.json").write_text(json.dumps(training, indent=2, sort_keys=True) + "\n")
             (output / "evaluation-manifest.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
@@ -527,7 +634,11 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
                 "adapter": {"path": "adapter_model.safetensors", "sha256": selected[3]},
                 "training": {"path": "training-manifest.json", "sha256": sha256_file(output / "training-manifest.json")},
                 "evaluation": {"path": "evaluation-manifest.json", "sha256": sha256_file(output / "evaluation-manifest.json")},
-                "benchmarks": [{"path": f"seed-{seed}-benchmark-results.json", "sha256": sha256_file(output / f"seed-{seed}-benchmark-results.json")} for seed in (42, 43)]}
+                "benchmarks": [{"path": f"seed-{seed}-benchmark-results.json", "sha256": sha256_file(output / f"seed-{seed}-benchmark-results.json")} for seed in (42, 43)],
+                "fresh_reload_proofs": [{"seed": seed,
+                                         "reference": {"path": f"seed-{seed}-reload-reference.json", "sha256": records[seed][4]["reference_sha256"]},
+                                         "receipt": {"path": f"seed-{seed}-fresh-reload-verification.json", "sha256": records[seed][4]["receipt_sha256"]},
+                                         "validation_sha256": records[seed][4]["validation_sha256"]} for seed in (42, 43)]}
     (output / "release-manifest.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n")
     names = sorted(item.name for item in output.iterdir() if item.name != "SHA256SUMS")
     (output / "SHA256SUMS").write_text("".join(f"{sha256_file(output / name)}  {name}\n" for name in names), encoding="utf-8")

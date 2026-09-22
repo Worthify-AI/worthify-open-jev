@@ -28,6 +28,19 @@ def evaluation_record(seed, adapter_sha, recipe="classification"):
             "task_results": {recipe: {"n": 1, "macro_f1": .5}}}
 
 
+def reload_reference():
+    return {"schema": "openjev-phase1-adapter-reload-reference-v1", "max_tokens": 20,
+            "tolerance": 1e-4, "rows": [{"id": "row-1", "option_ids": ["a", "b"], "logits": [.1, .2]}]}
+
+
+def reload_receipt(seed, adapter_sha, reference_sha, validation_sha="2" * 64):
+    return {"schema": "openjev-phase1-fresh-adapter-reload-v1", "passed": True,
+            "examples": 1, "max_abs_logit_error": 0., "tolerance": 1e-4,
+            "validation_sha256": validation_sha, "reference_sha256": reference_sha,
+            "adapter_sha256": adapter_sha, "seed": seed,
+            "base_model": {"source": BASE["id"], "revision": BASE["revision"]}}
+
+
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -48,12 +61,21 @@ def release_dir(tmp_path: Path, recipe="classification") -> Path:
     adapter_sha = _sha(directory / "adapter_model.safetensors")
     for name in ("training-manifest.json", "evaluation-manifest.json"):
         record = evaluation_record(42, adapter_sha, recipe) if name == "evaluation-manifest.json" else {
-            "base_model": BASE, "adapter_sha256": adapter_sha, "training_spec": {"recipe": recipe_record(recipe)}}
+            "base_model": BASE, "adapter_sha256": adapter_sha,
+            "training_spec": {"recipe": recipe_record(recipe), "validation_sha256": "2" * 64}}
         (directory / name).write_text(json.dumps(record))
     benchmark_names = ["seed-42-benchmark-results.json", "seed-43-benchmark-results.json"]
     for benchmark_name in benchmark_names:
         seed = int(benchmark_name.split("-")[1])
         (directory / benchmark_name).write_text(json.dumps(evaluation_record(seed, adapter_sha, recipe)))
+        reference_name = f"seed-{seed}-reload-reference.json"
+        receipt_name = f"seed-{seed}-fresh-reload-verification.json"
+        (directory / reference_name).write_text(json.dumps(reload_reference()))
+        (directory / receipt_name).write_text(json.dumps(reload_receipt(seed, adapter_sha, _sha(directory / reference_name))))
+    training = json.loads((directory / "training-manifest.json").read_text())
+    training["fresh_reload_reference"] = {"path": "seed-42-reload-reference.json",
+                                           "sha256": _sha(directory / "seed-42-reload-reference.json")}
+    (directory / "training-manifest.json").write_text(json.dumps(training))
     manifest = {
         "schema": "openjev-phase1-adapter-release-v1", "kind": "measured", "recipe": recipe, "selected_seed": 42,
         "base_model": BASE,
@@ -61,6 +83,10 @@ def release_dir(tmp_path: Path, recipe="classification") -> Path:
         "training": {"path": "training-manifest.json", "sha256": _sha(directory / "training-manifest.json")},
         "evaluation": {"path": "evaluation-manifest.json", "sha256": _sha(directory / "evaluation-manifest.json")},
         "benchmarks": [{"path": name, "sha256": _sha(directory / name)} for name in benchmark_names],
+        "fresh_reload_proofs": [{"seed": seed,
+                                 "reference": {"path": f"seed-{seed}-reload-reference.json", "sha256": _sha(directory / f"seed-{seed}-reload-reference.json")},
+                                 "receipt": {"path": f"seed-{seed}-fresh-reload-verification.json", "sha256": _sha(directory / f"seed-{seed}-fresh-reload-verification.json")},
+                                 "validation_sha256": "2" * 64} for seed in (42, 43)],
     }
     (directory / "release-manifest.json").write_text(json.dumps(manifest))
     _rewrite_checksums(directory)
@@ -129,6 +155,21 @@ def test_validate_release_rejects_base_weights_and_bad_manifest_link(tmp_path):
     (artifact / "release-manifest.json").write_text(json.dumps(manifest))
     _rewrite_checksums(artifact)
     with pytest.raises(ValueError, match="does not link the adapter hash"):
+        validate_release(artifact)
+
+
+def test_validate_release_rejects_tampered_fresh_reload_proof(tmp_path):
+    artifact = release_dir(tmp_path)
+    receipt = artifact / "seed-43-fresh-reload-verification.json"
+    record = json.loads(receipt.read_text())
+    record["adapter_sha256"] = "0" * 64
+    receipt.write_text(json.dumps(record))
+    manifest = json.loads((artifact / "release-manifest.json").read_text())
+    proof = next(item for item in manifest["fresh_reload_proofs"] if item["seed"] == 43)
+    proof["receipt"]["sha256"] = _sha(receipt)
+    (artifact / "release-manifest.json").write_text(json.dumps(manifest))
+    _rewrite_checksums(artifact)
+    with pytest.raises(ValueError, match="does not match its seed and adapter"):
         validate_release(artifact)
 
 
@@ -209,8 +250,14 @@ def training_runs(tmp_path):
         adapter.mkdir(parents=True)
         (adapter / "adapter_model.safetensors").write_bytes(f"adapter-{seed}".encode())
         (adapter / "adapter_config.json").write_text(json.dumps({"base_model_name_or_path": BASE["id"], "peft_type": "LORA"}))
+        reference_path = adapter / "reload-reference.json"
+        reference_path.write_text(json.dumps(reload_reference()))
+        reference_sha = _sha(reference_path)
+        adapter_sha = _sha(adapter / "adapter_model.safetensors")
+        (run / "fresh-reload-verification.json").write_text(json.dumps(reload_receipt(seed, adapter_sha, reference_sha)))
         (run / "manifest.json").write_text(json.dumps({"seed": seed, "model": {"source": BASE["id"], "revision": BASE["revision"]},
                                                       "epochs": 2, "validation_checkpoint": "/private/operator/run/checkpoint-epoch-00",
+                                                      "max_tokens": 20, "fresh_reload_reference": {"path": "final-adapter/reload-reference.json", "sha256": reference_sha},
                                                       "training_spec": {"seed": seed, "model": BASE["id"], "revision": BASE["revision"],
                                                                         "recipe": recipe_record(),
                                                                         "train_sha256": "1" * 64, "validation_sha256": "2" * 64},
@@ -234,6 +281,9 @@ def test_package_preserves_actual_evaluation_provenance(tmp_path):
     assert "not Jev" in card and "uncalibrated conditional option scores" in card and "REPLACE_WITH_40_CHARACTER_HUB_COMMIT" in card
     attribution = json.loads((destination / "attribution.json").read_text())
     assert {source["name"] for source in attribution["sources"]} >= {"CLINC150", "WANLI"}
+    manifest = json.loads((destination / "release-manifest.json").read_text())
+    assert {proof["seed"] for proof in manifest["fresh_reload_proofs"]} == {42, 43}
+    assert (destination / "seed-42-fresh-reload-verification.json").is_file()
 
 
 def test_package_copies_only_supplied_regular_base_notice(tmp_path):
@@ -272,6 +322,20 @@ def test_package_rejects_incomparable_training_runs(tmp_path):
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="same training data"):
         package_release(runs, evaluations, tmp_path / "release", 42, recipe="classification")
+
+
+def test_package_rejects_missing_or_mismatched_fresh_reload_proof(tmp_path):
+    runs, evaluations = training_runs(tmp_path)
+    (runs[1] / "fresh-reload-verification.json").unlink()
+    with pytest.raises(ValueError, match="fresh reload reference and receipt"):
+        package_release(runs, evaluations, tmp_path / "release", 42, recipe="classification")
+    runs, evaluations = training_runs(tmp_path / "other")
+    receipt_path = runs[1] / "fresh-reload-verification.json"
+    receipt = json.loads(receipt_path.read_text())
+    receipt["validation_sha256"] = "0" * 64
+    receipt_path.write_text(json.dumps(receipt))
+    with pytest.raises(ValueError, match="validation input and reference"):
+        package_release(runs, evaluations, tmp_path / "second-release", 42, recipe="classification")
 
 
 def test_package_rejects_recipe_relabeling(tmp_path):

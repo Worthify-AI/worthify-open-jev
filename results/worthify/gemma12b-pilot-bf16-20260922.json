@@ -1,0 +1,158 @@
+{
+  "adapter": {
+    "alpha": 32,
+    "dropout": 0.05,
+    "rank": 16,
+    "target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj"
+    ]
+  },
+  "adapter_reload_verification": {
+    "examples": 8,
+    "max_abs_logit_error": 0.0,
+    "tolerance": 0.0001
+  },
+  "code_revision": "34ceedd88f2210bd6b8bc2f54475ba20822dc430",
+  "effective_batch_size": 16,
+  "epochs": 1,
+  "estimate": {
+    "evidence_two_epochs_training_hours": 7.62624522850661,
+    "excludes": "Full validation, final evaluation, publication, and differences in sequence lengths. Larger candidates need their own pilot."
+  },
+  "fresh_process_reload": {
+    "adapter_sha256": "b29fdda9b2eba9641f846a616c02a016f7514dd655578ed3181ea47fbbfa52d2",
+    "base_model": {
+      "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+      "source": "google/gemma-4-12B-it"
+    },
+    "examples": 8,
+    "max_abs_logit_error": 0.0,
+    "passed": true,
+    "reference_sha256": "5da958a43408094fcfe1fd0b065da5a9c9398d7d05c514ef2b2cdda57a1d8e72",
+    "schema": "openjev-phase1-fresh-adapter-reload-v1",
+    "seed": 42,
+    "tolerance": 0.0001,
+    "validation_sha256": "d287ba945b4f4396eee6204a6a20fe4de224318a4bd8b907652d3f1f1e1b3811"
+  },
+  "hardware": "NVIDIA A100-SXM4-40GB",
+  "learning_rate": 0.0002,
+  "max_tokens": 2048,
+  "median_training_examples_per_second": 1.4568112704363676,
+  "model": {
+    "bitsandbytes_version": "0.50.2",
+    "dtype": "bfloat16",
+    "peft_version": "0.21.0",
+    "quantization": "nf4",
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "source": "google/gemma-4-12B-it",
+    "torch_version": "2.10.0+cu128",
+    "transformers_version": "5.17.0",
+    "use_cache": false
+  },
+  "optimizer_steps": [
+    {
+      "elapsed_seconds": 25.70738272089511,
+      "epoch": 0,
+      "examples_per_second": 1.3769455756458853,
+      "loss": 5.007877826690674,
+      "optimizer_step": 1
+    },
+    {
+      "elapsed_seconds": 36.88575606467202,
+      "epoch": 0,
+      "examples_per_second": 1.4313530291579308,
+      "loss": 5.50625467300415,
+      "optimizer_step": 2
+    },
+    {
+      "elapsed_seconds": 47.68011330580339,
+      "epoch": 0,
+      "examples_per_second": 1.4822695117148041,
+      "loss": 4.2677130699157715,
+      "optimizer_step": 3
+    },
+    {
+      "elapsed_seconds": 58.23848509695381,
+      "epoch": 0,
+      "examples_per_second": 1.5153978097248675,
+      "loss": 0.985115647315979,
+      "optimizer_step": 4
+    }
+  ],
+  "peak_cuda_memory_bytes": 8283135488,
+  "purpose": "Compatibility, fresh-load equivalence and timing only; not a release adapter or quality-improvement claim. Supersedes the earlier FP32-base pilot for scheduling.",
+  "schema": "worthify-jev-training-pilot-v2",
+  "seed": 42,
+  "source_provenance": {
+    "git_dirty": true,
+    "git_head": "34ceedd88f2210bd6b8bc2f54475ba20822dc430",
+    "runtime_versions": {
+      "bitsandbytes": "0.50.2",
+      "peft": "0.21.0",
+      "python": "3.12.3",
+      "torch": "2.10.0",
+      "transformers": "5.17.0"
+    },
+    "source_sha256s": {
+      "src/openjev_phase1/__init__.py": "96d51843ec9877d4295883914f8a698abaaecb4f8d321c451171761a8452ff0b",
+      "src/openjev_phase1/cli.py": "8cea48751ede0dc39bf21b34c221b546e56b04553ac646f7a548164baed5a8bc",
+      "src/openjev_phase1/core.py": "73564daad4e14d78fc9a18ec40667cb96374f6fd49e8b7b7ce8547c5f92b957f",
+      "src/openjev_phase1/datasets.py": "7071853e5b67951bb5b12c361005c56dabb5f7925cdefcd4c36b279ff1d15bc1",
+      "src/openjev_phase1/direct.py": "84e216f5822f9e09377b49d1e568a4c42cf05c664cc5bc97be8ef8ce4c07314e",
+      "src/openjev_phase1/evaluation.py": "707f01ee751a9c2057697ff5cbc3265145b552ebbbdc995cb7b6a8d6fab7a69b",
+      "src/openjev_phase1/publish.py": "520aa42d3bb1aee68f83c4a9f3f464165be004a484e4a252094433b8e1984bea",
+      "src/openjev_phase1/reranker.py": "ef9f0a944e85de464ee36d340d423907296c4d052a9332b7707be265bef6dac7",
+      "src/openjev_phase1/serial.py": "11d483c24c3e945d706f86e3c6b9b217bffec67bec556659ac5fdefdca6c9ed1",
+      "src/openjev_phase1/shared.py": "af6c25c475e22673dce4e90e2da8c7322fd782f4e16e7fb082e05203d8c46a2d",
+      "src/openjev_phase1/training.py": "fa2b23cd5abcf476ed2b08cd14f055c290a6f2c93ddb9ef5a28b28256f05546d"
+    }
+  },
+  "train_rows": 64,
+  "trainable_parameter_count": 21331968,
+  "training_seconds": 63.37980626989156,
+  "training_spec": {
+    "effective_batch_size": 16,
+    "learning_rate": 0.0002,
+    "max_tokens": 2048,
+    "model": "google/gemma-4-12B-it",
+    "quantization": "nf4",
+    "recipe": {
+      "dataset": "WANLI",
+      "digest": "f3aa3dbcfe34a8050c4153b93ddb20a996e389c8ec46220736cb8c992b23d598",
+      "task": "evidence",
+      "version": "openjev-training-recipe-v1"
+    },
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "seed": 42,
+    "source_provenance": {
+      "git_dirty": true,
+      "git_head": "34ceedd88f2210bd6b8bc2f54475ba20822dc430",
+      "runtime_versions": {
+        "bitsandbytes": "0.50.2",
+        "peft": "0.21.0",
+        "python": "3.12.3",
+        "torch": "2.10.0",
+        "transformers": "5.17.0"
+      },
+      "source_sha256s": {
+        "src/openjev_phase1/__init__.py": "96d51843ec9877d4295883914f8a698abaaecb4f8d321c451171761a8452ff0b",
+        "src/openjev_phase1/cli.py": "8cea48751ede0dc39bf21b34c221b546e56b04553ac646f7a548164baed5a8bc",
+        "src/openjev_phase1/core.py": "73564daad4e14d78fc9a18ec40667cb96374f6fd49e8b7b7ce8547c5f92b957f",
+        "src/openjev_phase1/datasets.py": "7071853e5b67951bb5b12c361005c56dabb5f7925cdefcd4c36b279ff1d15bc1",
+        "src/openjev_phase1/direct.py": "84e216f5822f9e09377b49d1e568a4c42cf05c664cc5bc97be8ef8ce4c07314e",
+        "src/openjev_phase1/evaluation.py": "707f01ee751a9c2057697ff5cbc3265145b552ebbbdc995cb7b6a8d6fab7a69b",
+        "src/openjev_phase1/publish.py": "520aa42d3bb1aee68f83c4a9f3f464165be004a484e4a252094433b8e1984bea",
+        "src/openjev_phase1/reranker.py": "ef9f0a944e85de464ee36d340d423907296c4d052a9332b7707be265bef6dac7",
+        "src/openjev_phase1/serial.py": "11d483c24c3e945d706f86e3c6b9b217bffec67bec556659ac5fdefdca6c9ed1",
+        "src/openjev_phase1/shared.py": "af6c25c475e22673dce4e90e2da8c7322fd782f4e16e7fb082e05203d8c46a2d",
+        "src/openjev_phase1/training.py": "fa2b23cd5abcf476ed2b08cd14f055c290a6f2c93ddb9ef5a28b28256f05546d"
+      }
+    },
+    "train_sha256": "988b0cd116b83e13aefc4216dc6d01d823e941ab2e61cef1278b9c448224084f",
+    "validation_sha256": "d287ba945b4f4396eee6204a6a20fe4de224318a4bd8b907652d3f1f1e1b3811"
+  },
+  "validation_rows": 16
+}
