@@ -1,6 +1,7 @@
 import hashlib
 import json
 import shutil
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -180,8 +181,11 @@ def test_private_upload_then_explicit_public_promotion(tmp_path):
     assert hub.private["worthify/private-adapter"] is True
     with pytest.raises(ValueError, match="--release-public"):
         promote_public(artifact, "worthify/private-adapter", "worthify/public-adapter", release_public=False, private_revision=COMMIT, api=hub)
-    promote_public(artifact, "worthify/private-adapter", "worthify/public-adapter", release_public=True, private_revision=COMMIT, api=hub)
+    receipt = promote_public(artifact, "worthify/private-adapter", "worthify/public-adapter", release_public=True, private_revision=COMMIT, api=hub)
     assert hub.private["worthify/public-adapter"] is False
+    assert receipt["repo_id"] == "worthify/public-adapter"
+    assert receipt["revision"] == COMMIT
+    assert receipt["hashes"]["adapter_model.safetensors"] == _sha(artifact / "adapter_model.safetensors")
     assert all(revision == COMMIT for _, _, revision in hub.downloads)
 
 
@@ -234,7 +238,9 @@ def test_publish_index_materializes_two_recipes_with_same_seed(tmp_path):
     index = tmp_path / "index.json"
     index.write_text(json.dumps({"schema": "openjev-phase1-release-index-v1", "state": "verified", "candidates": candidates}))
     destination = tmp_path / "materialized"
-    publish_index(index, destination, release_public=True, api=hub)
+    receipts = publish_index(index, destination, release_public=True, api=hub)
+    assert {receipt["repo_id"] for receipt in receipts} == {"org/classification", "org/evidence"}
+    assert {receipt["revision"] for receipt in receipts} == {COMMIT}
     for recipe in ("classification", "evidence"):
         assert hub.private[f"org/{recipe}"] is False
         assert not (destination / recipe / "README.md").is_symlink()
@@ -278,12 +284,42 @@ def test_package_preserves_actual_evaluation_provenance(tmp_path):
     assert _sha(destination / "adapter_model.safetensors") == _sha(runs[0] / "final-adapter/adapter_model.safetensors")
     assert "validation_checkpoint" not in json.loads((destination / "training-manifest.json").read_text())
     card = (destination / "README.md").read_text()
-    assert "not Jev" in card and "uncalibrated conditional option scores" in card and "REPLACE_WITH_40_CHARACTER_HUB_COMMIT" in card
+    assert "not Jev" in card and "uncalibrated conditional option scores" in card
+    assert "Worthify/worthify-jev-classification" in card
+    assert "HfApi(token=False).model_info" in card
+    assert '--adapter-revision "$ADAPTER_REVISION"' in card
+    assert "REPLACE_WITH" not in card
+    usage = card.split("```bash\n", 1)[1].split("\n```", 1)[0]
+    subprocess.run(["bash", "-n"], input=usage, text=True, check=True)
     attribution = json.loads((destination / "attribution.json").read_text())
     assert {source["name"] for source in attribution["sources"]} >= {"CLINC150", "WANLI"}
     manifest = json.loads((destination / "release-manifest.json").read_text())
     assert {proof["seed"] for proof in manifest["fresh_reload_proofs"]} == {42, 43}
     assert (destination / "seed-42-fresh-reload-verification.json").is_file()
+
+
+def test_package_uses_configured_public_repository_in_runnable_card(tmp_path):
+    runs, evaluations = training_runs(tmp_path)
+    destination = tmp_path / "release"
+    package_release(
+        runs, evaluations, destination, 42, recipe="classification",
+        public_repo_id="Example/custom-classifier",
+    )
+    card = (destination / "README.md").read_text()
+    assert card.count("Example/custom-classifier") == 2
+    assert "Worthify/worthify-jev-classification" not in card
+    validate_release(destination)
+
+
+def test_package_rejects_invalid_public_repository_before_writing(tmp_path):
+    runs, evaluations = training_runs(tmp_path)
+    destination = tmp_path / "release"
+    with pytest.raises(ValueError, match="owner/repository"):
+        package_release(
+            runs, evaluations, destination, 42, recipe="classification",
+            public_repo_id="invalid repository",
+        )
+    assert not destination.exists()
 
 
 def test_package_copies_only_supplied_regular_base_notice(tmp_path):

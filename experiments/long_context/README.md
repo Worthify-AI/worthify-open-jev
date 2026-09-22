@@ -107,3 +107,45 @@ distances, held-out source groups, reordered options, irrelevant-context tests,
 and comparison with the frozen base. Report those separately before advertising
 long-context adapter quality. Neither native context support nor this systems
 probe establishes one-million-token support.
+
+## Fixed authored training pilot
+
+`train_authored.py` is a bounded one-epoch pilot over the existing frozen
+authored JSONL. It selects exactly nine training rows using the train split
+alone: one row for every semantic-label/evidence-position cell, cyclically
+distributed across the three train source groups. It then reorders each row's
+options deterministically with seed 42 and derives the numeric target from the
+reordered semantic IDs.
+
+The frozen plan, source-disjoint 27-row train and validation files, and output
+directory are explicit inputs. The plan requires NF4/BF16 rank-16 q/k/v/o LoRA,
+activation offload, one 262,144-token-or-shorter example per optimizer step,
+effective batch one, learning rate 2e-4, gradient clipping at 1.0, and exactly
+nine updates. This small-batch choice intentionally differs from the main
+effective-batch-16 recipes. Every selected train row and all 27 validation rows
+are tokenized without truncation before the first update.
+
+```bash
+CUDA_VISIBLE_DEVICES=<one-gpu-uuid> python -m experiments.long_context.train_authored \
+  --plan manifests/authored-long-context-pilot-20260922.json \
+  --train /path/to/authored-260k-v1/authored-long-context-train.jsonl \
+  --validation /path/to/authored-260k-v1/authored-long-context-validation.jsonl \
+  --output /path/to/new/authored-training-v1 \
+  --cache-dir /path/to/hub-cache --max-tokens 262144 --activation-offload
+```
+
+The output is create-only. Adapter-only checkpoints are atomically saved after
+every update; the ninth checkpoint is always the final model, with no validation
+checkpoint selection. `steps.jsonl` records row IDs, semantic labels, prompt
+hashes, token counts, finite loss/gradient evidence, clipping, timing, GPU/host
+memory, and offload statistics. Final validation uses native last-position
+option logits on all 27 held-out validation rows. `final-adapter/` includes the
+adapter, a provenance receipt, its local revision string, and `SHA256SUMS`; pass
+that receipt's `local_adapter_revision` as `--adapter-revision` when using the
+authored evaluator with the local adapter path.
+
+This pilot uses nine fictional templated examples and one seed. Its validation
+is exploratory authored-data evidence, not a public benchmark, and it cannot
+support claims of generalized 256K competence or any one-million-token context
+extension. Evaluate matched short and long held-out test rows separately from
+the training run.

@@ -1,0 +1,115 @@
+{
+  "caveats": [
+    "The first five probes do not record a seed; the 262144-token offload probe records seed 42.",
+    "These are synthetic systems measurements, not semantic-quality results or a trained-model release.",
+    "The maximum observed run is native-context 262144 tokens on one NVIDIA B200; this evidence makes no 1M-token claim."
+  ],
+  "hardware": {
+    "compute_capability": [
+      10,
+      0
+    ],
+    "cuda_runtime": "12.8",
+    "name": "NVIDIA B200",
+    "nvidia_driver": "580.126.20",
+    "total_memory_gib": 178.35107421875,
+    "visible_device_count": 1
+  },
+  "kernel_validation": {
+    "evidence": [
+      {
+        "artifact": "kernel-evidence/kernel-v1.json",
+        "error": "AssertionError: output contains non-finite values",
+        "status": "fail"
+      },
+      {
+        "artifact": "kernel-evidence/kernel-v3.json",
+        "error": "AssertionError: q gradient",
+        "status": "fail"
+      },
+      {
+        "artifact": "kernel-evidence/kernel-v4.json",
+        "error": "InductorError: RuntimeError: No valid triton configs. OutOfMemoryError: out of resource: triton_tem_fused_flex_attention_0 Required: 263168 Hardware limit:232448 Reducing block sizes or `num_stages` may help.\n\nSet TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS=\"+dynamo\"\n",
+        "status": "fail"
+      },
+      {
+        "artifact": "kernel-evidence/kernel-v5.json",
+        "status": "fail"
+      },
+      {
+        "artifact": "kernel-evidence/kernel-v6.json",
+        "status": "pass"
+      },
+      {
+        "artifact": "kernel-evidence/kernel-v7.json",
+        "status": "pass"
+      }
+    ],
+    "final_status": "pass",
+    "final_version": 7
+  },
+  "model": {
+    "quantization": "nf4",
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "source": "google/gemma-4-12B-it"
+  },
+  "offload_validation": {
+    "gradient_tensors_compared": 368,
+    "max_gradient_abs_error": 0.0,
+    "mechanism": "native-save-on-cpu-checkpoint-inputs",
+    "numerically_equivalent": true,
+    "tokens": 8192
+  },
+  "probes": [
+    {
+      "activation_offload": false,
+      "mean_measured_step_seconds": 1.8336797901429236,
+      "peak_cuda_allocated_gib": 13.856642246246338,
+      "peak_cuda_reserved_gib": 14.98828125,
+      "seed": null,
+      "tokens": 8192
+    },
+    {
+      "activation_offload": false,
+      "mean_measured_step_seconds": 4.256920755840838,
+      "peak_cuda_allocated_gib": 20.340776920318604,
+      "peak_cuda_reserved_gib": 22.310546875,
+      "seed": null,
+      "tokens": 16384
+    },
+    {
+      "activation_offload": false,
+      "mean_measured_step_seconds": 11.675841686315835,
+      "peak_cuda_allocated_gib": 33.3101372718811,
+      "peak_cuda_reserved_gib": 37.3671875,
+      "seed": null,
+      "tokens": 32768
+    },
+    {
+      "activation_offload": false,
+      "mean_measured_step_seconds": 37.32974077947438,
+      "peak_cuda_allocated_gib": 59.24888849258423,
+      "peak_cuda_reserved_gib": 66.369140625,
+      "seed": null,
+      "tokens": 65536
+    },
+    {
+      "activation_offload": false,
+      "mean_measured_step_seconds": 131.31005183095112,
+      "peak_cuda_allocated_gib": 111.13153314590454,
+      "peak_cuda_reserved_gib": 125.0546875,
+      "seed": null,
+      "tokens": 131072
+    },
+    {
+      "activation_offload": true,
+      "mean_measured_step_seconds": 580.784037923906,
+      "peak_cuda_allocated_gib": 134.38313722610474,
+      "peak_cuda_reserved_gib": 160.677734375,
+      "seed": 42,
+      "tokens": 262144
+    }
+  ],
+  "schema": "openjev-long-context-systems-summary-v1",
+  "status": "verified"
+}

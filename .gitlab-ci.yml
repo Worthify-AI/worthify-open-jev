@@ -51,4 +51,9 @@ release_adapter:
     - pip install huggingface-hub==1.31.0
     - scripts/release-check.sh "$CI_COMMIT_TAG"
     - test "${CI_COMMIT_REF_PROTECTED:-false}" = true
-    - PYTHONPATH=src python -m openjev_phase1.publish publish-index --index "release/${CI_COMMIT_TAG}.json" --work-dir /tmp/openjev-release --release-public
+    - mkdir -p artifacts
+    - PYTHONPATH=src python -m openjev_phase1.publish publish-index --index "release/${CI_COMMIT_TAG}.json" --work-dir /tmp/openjev-release --release-public > artifacts/public-release-receipts.json
+  artifacts:
+    paths:
+      - artifacts/public-release-receipts.json
+    expire_in: 1 year

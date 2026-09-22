@@ -1,0 +1,93 @@
+{
+  "cases": [
+    null
+  ],
+  "error": "InductorError: RuntimeError: No valid triton configs. OutOfMemoryError: out of resource: triton_tem_fused_flex_attention_0 Required: 263168 Hardware limit:232448 Reducing block sizes or `num_stages` may help.\n\nSet TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS=\"+dynamo\"\n",
+  "mask_builder": {
+    "kind": "analytical BlockMask",
+    "stride_requirement": "Torch 2.10 shares stride-derived offsets across partial/full KV and Q index arrays; all analytical index arrays are padded to identical shapes and strides.",
+    "transformers_native_mask_warning": "Transformers 5.17.0 flex_attention_mask calls create_block_mask/create_mask, which materializes a token-level B*H*Q*KV boolean mask."
+  },
+  "mask_equivalence": {
+    "checks": {
+      "k_gradient": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 131072,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 3.2194108963012695,
+        "rms_error": 0.0
+      },
+      "output": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 262144,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 0.7834040522575378,
+        "rms_error": 0.0
+      },
+      "q_gradient": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 262080,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 2.270447015762329,
+        "rms_error": 0.0
+      },
+      "v_gradient": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 131072,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 1.1096930503845215,
+        "rms_error": 0.0
+      }
+    },
+    "criterion": "bitwise-identical output and q/k/v gradients",
+    "pattern": "local causal window=1024",
+    "sequence_length": 2048,
+    "status": "pass"
+  },
+  "metadata": {
+    "cuda": {
+      "available": true,
+      "compute_capability": [
+        10,
+        0
+      ],
+      "device_count": 1,
+      "device_index": 0,
+      "device_name": "NVIDIA B200",
+      "runtime_version": "12.8",
+      "total_memory_bytes": 191503007744
+    },
+    "cuda_visible_devices": "GPU-d5461a3d-6daa-d330-fbbf-20d941f091d1",
+    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.17.0"
+  },
+  "numerical_acceptance": {
+    "gradient": {
+      "max_abs_error": 1.0,
+      "max_normalized_rms_error": 0.02
+    },
+    "output": {
+      "max_abs_error": 0.05,
+      "max_normalized_rms_error": 0.002
+    },
+    "rationale": "BF16 fused and SDPA-math reductions may differ in order. Near-zero pointwise relative errors are ill-conditioned, so acceptance bounds worst absolute error and RMS error normalized by reference RMS; this does not claim FP32 equivalence."
+  },
+  "probe": "gemma4-12b-long-context-flex-attention",
+  "reference_sequence_length_cap": 2048,
+  "schema_version": 1,
+  "status": "fail"
+}

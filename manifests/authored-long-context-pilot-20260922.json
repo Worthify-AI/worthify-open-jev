@@ -1,0 +1,39 @@
+{
+  "schema": "worthify-authored-long-context-plan-v1",
+  "created_utc": "2026-09-22T15:29:01.808847+00:00",
+  "purpose": "Bounded experimental full-length training with meaningful authored evidence labels; not a general-quality claim.",
+  "base_model": "google/gemma-4-12B-it",
+  "base_revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+  "data": "existing frozen authored-260k-v1",
+  "training_examples": 9,
+  "training_selection": "Deterministic label-by-position balanced subset covering all three training source groups, independent of validation and test results.",
+  "epochs": 1,
+  "optimizer_steps": 9,
+  "micro_batch": 1,
+  "effective_batch": 1,
+  "learning_rate": 0.0002,
+  "seed": 42,
+  "quantization": "NF4",
+  "compute_dtype": "BF16",
+  "lora_rank": 16,
+  "lora_targets": [
+    "q_proj",
+    "k_proj",
+    "v_proj",
+    "o_proj"
+  ],
+  "max_tokens": 262144,
+  "activation_offload": true,
+  "checkpoint_selection": "None: use the fixed ninth-step checkpoint, report even if worse.",
+  "evaluation": "All 27 held-out test rows at matched short and long lengths; all 27 validation rows at long length. Compare with frozen-base runs already queued.",
+  "limitations": [
+    "Tiny templated authored set; only three training source groups.",
+    "One seed and microbatch one diverge from the main two-seed effective-batch-16 recipes.",
+    "No one-million-token context extension.",
+    "Main CLINC/WANLI adapters remain separately trained at 2048 tokens."
+  ],
+  "estimate_training_minutes": 95,
+  "estimated_additional_evaluation_minutes": 70,
+  "estimated_added_running_cost_usd": 20,
+  "start_gate": "Completed finite-gradient 262144-token systems probe, CPU tests and code review, and sole GPU availability after base evaluation."
+}

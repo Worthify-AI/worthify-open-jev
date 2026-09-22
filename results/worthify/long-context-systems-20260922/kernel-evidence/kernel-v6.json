@@ -1,0 +1,280 @@
+{
+  "cases": [
+    {
+      "attention_scale": 1.0,
+      "checks": {
+        "k_gradient": {
+          "all_finite": true,
+          "max_abs_error": 0.421875,
+          "max_abs_error_over_reference_rms": 0.0810982808470726,
+          "max_relative_error_above_1e-5": 5835.62548828125,
+          "mean_abs_error": 0.016219772398471832,
+          "name": "k gradient",
+          "nonzero_count": 4194304,
+          "normalized_rms_error": 0.005835532210767269,
+          "reference_rms": 5.202021598815918,
+          "rms_error": 0.03035656362771988,
+          "within_tolerance": true
+        },
+        "output": {
+          "all_finite": true,
+          "max_abs_error": 0.03125,
+          "max_abs_error_over_reference_rms": 0.03480641171336174,
+          "max_relative_error_above_1e-5": 91.07515716552734,
+          "mean_abs_error": 7.41238909540698e-05,
+          "name": "output",
+          "nonzero_count": 8388608,
+          "normalized_rms_error": 0.0005682959454134107,
+          "reference_rms": 0.8978230953216553,
+          "rms_error": 0.0005102292052470148,
+          "within_tolerance": true
+        },
+        "q_gradient": {
+          "all_finite": true,
+          "max_abs_error": 0.5,
+          "max_abs_error_over_reference_rms": 0.13807857036590576,
+          "max_relative_error_above_1e-5": 13183.8359375,
+          "mean_abs_error": 0.011490792036056519,
+          "name": "q gradient",
+          "nonzero_count": 8388352,
+          "normalized_rms_error": 0.005897493101656437,
+          "reference_rms": 3.621126651763916,
+          "rms_error": 0.02135556936264038,
+          "within_tolerance": true
+        },
+        "v_gradient": {
+          "all_finite": true,
+          "max_abs_error": 0.0625,
+          "max_abs_error_over_reference_rms": 0.04922205209732056,
+          "max_relative_error_above_1e-5": 375.595703125,
+          "mean_abs_error": 0.000909402035176754,
+          "name": "v gradient",
+          "nonzero_count": 4194304,
+          "normalized_rms_error": 0.0021543740294873714,
+          "reference_rms": 1.2697560787200928,
+          "rms_error": 0.002735529560595751,
+          "within_tolerance": true
+        }
+      },
+      "compiled_forward_backward_seconds": 0.3457572413608432,
+      "dtype": "bfloat16",
+      "implementation": "torch.compile(fullgraph=True, dynamic=False) flex_attention",
+      "kernel_options": {
+        "BACKEND": "TRITON",
+        "BLOCKS_ARE_CONTIGUOUS": false,
+        "ROWS_GUARANTEED_SAFE": false
+      },
+      "name": "local_causal_gqa",
+      "peak_cuda_bytes_flex_phase": 516189184,
+      "reference": "scaled_dot_product_attention SDPBackend.MATH with dense boolean mask",
+      "shape": {
+        "batch": 1,
+        "head_dim": 256,
+        "kv_heads": 8,
+        "query_heads": 16,
+        "sequence_length": 2048,
+        "window_size": 1024
+      },
+      "status": "pass",
+      "tolerances": {
+        "gradient": {
+          "max_abs_error": null,
+          "max_abs_error_over_reference_rms": 0.2,
+          "max_normalized_rms_error": 0.02
+        },
+        "output": {
+          "max_abs_error": 0.05,
+          "max_normalized_rms_error": 0.002
+        }
+      }
+    },
+    {
+      "attention_scale": 1.0,
+      "checks": {
+        "k_gradient": {
+          "all_finite": true,
+          "max_abs_error": 1.25,
+          "max_abs_error_over_reference_rms": 0.06828524172306061,
+          "max_relative_error_above_1e-5": 6975.703125,
+          "mean_abs_error": 0.07111840695142746,
+          "name": "k gradient",
+          "nonzero_count": 1048576,
+          "normalized_rms_error": 0.006246121134608984,
+          "reference_rms": 18.305566787719727,
+          "rms_error": 0.11433878540992737,
+          "within_tolerance": true
+        },
+        "output": {
+          "all_finite": true,
+          "max_abs_error": 0.015625,
+          "max_abs_error_over_reference_rms": 0.016874421387910843,
+          "max_relative_error_above_1e-5": 92.10588073730469,
+          "mean_abs_error": 5.633116961689666e-05,
+          "name": "output",
+          "nonzero_count": 16777215,
+          "normalized_rms_error": 0.0004890682175755501,
+          "reference_rms": 0.9259576797485352,
+          "rms_error": 0.00045285647502169013,
+          "within_tolerance": true
+        },
+        "q_gradient": {
+          "all_finite": true,
+          "max_abs_error": 0.59375,
+          "max_abs_error_over_reference_rms": 0.13103921711444855,
+          "max_relative_error_above_1e-5": 26561.8125,
+          "mean_abs_error": 0.014302961528301239,
+          "name": "q gradient",
+          "nonzero_count": 16777213,
+          "normalized_rms_error": 0.006274926941841841,
+          "reference_rms": 4.531086444854736,
+          "rms_error": 0.02843223698437214,
+          "within_tolerance": true
+        },
+        "v_gradient": {
+          "all_finite": true,
+          "max_abs_error": 0.125,
+          "max_abs_error_over_reference_rms": 0.0337291918694973,
+          "max_relative_error_above_1e-5": 171.55409240722656,
+          "mean_abs_error": 0.002613940741866827,
+          "name": "v gradient",
+          "nonzero_count": 1048576,
+          "normalized_rms_error": 0.0019681549165397882,
+          "reference_rms": 3.705988645553589,
+          "rms_error": 0.007293960079550743,
+          "within_tolerance": true
+        }
+      },
+      "compiled_forward_backward_seconds": 0.3670326406136155,
+      "dtype": "bfloat16",
+      "implementation": "torch.compile(fullgraph=True, dynamic=False) flex_attention",
+      "kernel_options": {
+        "BACKEND": "TRITON",
+        "BLOCKS_ARE_CONTIGUOUS": false,
+        "ROWS_GUARANTEED_SAFE": false,
+        "bwd_BLOCK_M1": 32,
+        "bwd_BLOCK_M2": 32,
+        "bwd_BLOCK_N1": 32,
+        "bwd_BLOCK_N2": 32,
+        "fwd_BLOCK_M": 32,
+        "fwd_BLOCK_N": 32,
+        "num_stages": 2,
+        "num_warps": 4
+      },
+      "name": "global_causal_gqa",
+      "peak_cuda_bytes_flex_phase": 864318464,
+      "reference": "scaled_dot_product_attention SDPBackend.MATH with dense boolean mask",
+      "shape": {
+        "batch": 1,
+        "head_dim": 512,
+        "kv_heads": 1,
+        "query_heads": 16,
+        "sequence_length": 2048,
+        "window_size": null
+      },
+      "status": "pass",
+      "tolerances": {
+        "gradient": {
+          "max_abs_error": null,
+          "max_abs_error_over_reference_rms": 0.2,
+          "max_normalized_rms_error": 0.02
+        },
+        "output": {
+          "max_abs_error": 0.05,
+          "max_normalized_rms_error": 0.002
+        }
+      }
+    }
+  ],
+  "mask_builder": {
+    "kind": "analytical BlockMask",
+    "stride_requirement": "Torch 2.10 shares stride-derived offsets across partial/full KV and Q index arrays; all analytical index arrays are padded to identical shapes and strides.",
+    "transformers_native_mask_warning": "Transformers 5.17.0 flex_attention_mask calls create_block_mask/create_mask, which materializes a token-level B*H*Q*KV boolean mask."
+  },
+  "mask_equivalence": {
+    "checks": {
+      "k_gradient": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_abs_error_over_reference_rms": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 131072,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 3.2194108963012695,
+        "rms_error": 0.0
+      },
+      "output": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_abs_error_over_reference_rms": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 262144,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 0.7834040522575378,
+        "rms_error": 0.0
+      },
+      "q_gradient": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_abs_error_over_reference_rms": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 262080,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 2.270447015762329,
+        "rms_error": 0.0
+      },
+      "v_gradient": {
+        "all_finite": true,
+        "max_abs_error": 0.0,
+        "max_abs_error_over_reference_rms": 0.0,
+        "max_relative_error_above_1e-5": 0.0,
+        "mean_abs_error": 0.0,
+        "nonzero_count": 131072,
+        "normalized_rms_error": 0.0,
+        "reference_rms": 1.1096930503845215,
+        "rms_error": 0.0
+      }
+    },
+    "criterion": "bitwise-identical output and q/k/v gradients",
+    "pattern": "local causal window=1024",
+    "sequence_length": 2048,
+    "status": "pass"
+  },
+  "metadata": {
+    "cuda": {
+      "available": true,
+      "compute_capability": [
+        10,
+        0
+      ],
+      "device_count": 1,
+      "device_index": 0,
+      "device_name": "NVIDIA B200",
+      "runtime_version": "12.8",
+      "total_memory_bytes": 191503007744
+    },
+    "cuda_visible_devices": "GPU-d5461a3d-6daa-d330-fbbf-20d941f091d1",
+    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.17.0"
+  },
+  "numerical_acceptance": {
+    "gradient": {
+      "max_abs_error": "unbounded; gradient scale differs by head pattern",
+      "max_abs_error_over_reference_rms": 0.2,
+      "max_normalized_rms_error": 0.02
+    },
+    "output": {
+      "max_abs_error": 0.05,
+      "max_normalized_rms_error": 0.002
+    },
+    "rationale": "BF16 fused and SDPA-math reductions may differ in order. Near-zero pointwise relative errors are ill-conditioned, so acceptance bounds worst absolute error and RMS error normalized by reference RMS; this does not claim FP32 equivalence."
+  },
+  "probe": "gemma4-12b-long-context-flex-attention",
+  "reference_sequence_length_cap": 2048,
+  "schema_version": 1,
+  "status": "pass"
+}

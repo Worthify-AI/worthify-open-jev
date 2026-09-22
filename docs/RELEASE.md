@@ -6,12 +6,32 @@ Use the verified company Hugging Face organization for both private candidate re
 
 Before full training, prove private upload and download with `scripts/hf-private-smoke.py` using an authorized project-scoped Hub login. Before the automated release, configure a protected, masked `HF_TOKEN` limited to the project's Hub repositories and a protected `HF_SMOKE_REPO_ID` naming the private transport-test repository. The `private_hub_smoke` default-branch job uploads an inert payload, downloads it at the returned immutable commit, verifies every checksum, and saves a receipt as a CI artifact. A successful local transport check permits local experiments but does not prove that the CI credential is configured. No model claim or public visibility change is made by this check.
 
-1. Finish both training seeds, 42 and 43, for each recipe: `classification` and `evidence`. Both recipes use the same validation-selected, pinned Gemma base. Evaluate each exported adapter on held-out test rows. The evaluator verifies the prediction metadata against the requested base, adapter hash, and seed, and hashes its actual input files.
+1. Finish both training seeds, 42 and 43, for each recipe: `classification` and `evidence`. Both recipes use the owner-selected, pinned Gemma 4 12B base. Evaluate each exported adapter on held-out test rows. The evaluator verifies the prediction metadata against the requested base, adapter hash, and seed, and hashes its actual input files.
 2. For each seed, run `scripts/verify-adapter-reload.py` against the exact validation file in a fresh process, writing a create-only `fresh-reload-verification.json` beside the run manifest. Then package each recipe into a new directory with `python -m openjev_phase1.publish package --recipe classification --run-dir /path/seed42 --run-dir /path/seed43 --evaluation /path/eval42.json --evaluation /path/eval43.json --selected-seed 42 --output /path/classification-release`. Repeat with `--recipe evidence` and its own paths/selected seed. Choose the seed by validation macro-F1, never test scores. The packager requires a passing fresh-loader receipt and bounded ID/logit-only reload reference for both seeds, and rejects mismatched adapter/base/seed/validation/reference hashes, missing verified input hashes, nonfinite metrics, or different bases/test inputs across seeds.
 3. Run `python -m openjev_phase1.publish validate --artifact-dir /path/classification-release`, then `python -m openjev_phase1.publish upload-private --artifact-dir /path/classification-release --repo-id "$HF_ORG/openjev-candidate-classification"`. Repeat for evidence. The upload command returns a JSON receipt containing the exact Hub commit and hashes after downloading every file at that commit to verify it. Existing public repositories and stale extra files are rejected.
 4. Put the two verified private commit hashes, recipe names, selected seeds, and destination repositories in `release/vMAJOR.MINOR.PATCH.json`; set `state` to `verified` only after successful private verification. Both recipes may select the same seed. The checked-in pending index has no claimed candidate revisions or selected seeds.
 5. Export compact benchmark evidence with `python benchmarks/export_worthify.py --run-dir /path/full-run --data-dir /path/frozen-data --output results/worthify/vMAJOR.MINOR.PATCH`, then run `python benchmarks/verify_worthify.py --artifact-dir results/worthify/vMAJOR.MINOR.PATCH`. This replays the complete frozen/two-seed reports, calibration, uncertainty, latency, memory, and measured serial throughput from text-free rows. Commit this evidence directory and the release index. Run `pytest -q`, `(cd results/raw && sha256sum -c SHA256SUMS)`, and `python benchmarks/verify_published.py`. Do not tag a release with placeholder measurements. The release check requires the exact tagged checkout, a verified index, and matching benchmark evidence at `results/worthify/<tag>`.
 6. The protected release-tag job invokes `publish-index --release-public`. It downloads both candidates at their pinned revisions into separate recipe directories, copies cached files into a clean flat bundle, and validates both packages before promoting either. Each public destination is staged privately, uploaded, and re-downloaded at its returned commit before visibility changes. An existing public destination is refused; use a new release destination when publishing another version.
+
+The publication command returns the actual public repository, immutable commit,
+and file hashes for each recipe. CI retains those receipts as
+`artifacts/public-release-receipts.json`; include the fixed public commits in
+the release notes and article. The model card resolves a repository revision
+once for an ordinary new run. Reproduction uses the fixed release receipt.
+
+When including gameplay, use the classification candidate revision returned
+**after** its verified video section was added. The earlier private upload
+receipt refers to a card without videos. Make the checksummed companion dataset
+`Worthify/worthify-jev-gameplay` public as part of the coordinated release, then
+verify both model repositories and the pinned video bundle with
+`HfApi(token=False)` from a fresh cache. A public card pointing to a private
+dataset has broken playback. Keep all three predeclared seeds for each game.
+
+Promotion of the two model repositories is sequential. If one promotion fails,
+record the partial state and finish verification before announcing the release.
+Do not run local promotion and then expect the tag job to promote the same
+already-public destinations. Use the configured CI path, or document and
+coordinate an explicit local publication recovery.
 
 For one already validated candidate, explicit promotion is also available:
 
@@ -29,4 +49,4 @@ python -m openjev_phase1.publish promote-public \
 
 `release-manifest.json` uses `openjev-phase1-adapter-release-v1`, identifies the recipe and selected seed, and links every evidence file by SHA-256. Its base model has an immutable 40-character Hub revision. The adapter configuration must name that base and declare LoRA. The selected evaluation and seed report must identify the exported adapter's actual hash; the other seed retains its own adapter hash. It also links a reference and fresh-loader receipt for each seed; each reference is limited to eight validation row IDs, option IDs, and logits, with no raw decision text.
 
-Measured evaluation reports use `openjev-phase1-evaluation-v1` with `provenance_verified: true`, exact `inputs.gold_sha256` and `inputs.predictions_sha256`, matching base/adapter/seed identity, and finite held-out test metrics. Packaging preserves these fields rather than replacing them with claimed training-run values. Only aggregate reports are published; hashed raw evidence remains in the authorized local evidence store.
+Measured evaluation reports use `openjev-phase1-evaluation-v1` with `provenance_verified: true`, exact `inputs.gold_sha256` and `inputs.predictions_sha256`, matching base/adapter/seed identity, and finite held-out test metrics. Packaging preserves these fields rather than replacing them with claimed training-run values. Adapter packages contain aggregate reports; the source release separately contains compact, text-free prediction rows for recomputing those reports. Raw source records remain in the authorized local evidence store.

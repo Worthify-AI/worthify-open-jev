@@ -1,0 +1,31 @@
+{
+  "cases": [],
+  "error": "AssertionError: output contains non-finite values",
+  "mask_builder": {
+    "kind": "analytical BlockMask",
+    "transformers_native_mask_warning": "Transformers 5.17.0 flex_attention_mask calls create_block_mask/create_mask, which materializes a token-level B*H*Q*KV boolean mask."
+  },
+  "metadata": {
+    "cuda": {
+      "available": true,
+      "compute_capability": [
+        10,
+        0
+      ],
+      "device_count": 1,
+      "device_index": 0,
+      "device_name": "NVIDIA B200",
+      "runtime_version": "12.8",
+      "total_memory_bytes": 191503007744
+    },
+    "cuda_visible_devices": "GPU-d5461a3d-6daa-d330-fbbf-20d941f091d1",
+    "platform": "Linux-6.8.0-90-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "torch": "2.10.0+cu128",
+    "transformers": "5.17.0"
+  },
+  "probe": "gemma4-12b-long-context-flex-attention",
+  "reference_sequence_length_cap": 2048,
+  "schema_version": 1,
+  "status": "fail"
+}

@@ -1,0 +1,9 @@
+{
+  "schema": "worthify-long-context-source-provenance-v1",
+  "current_experiment_code_revision": "1b01aee77dfe49013e1cd8c542f9714ad5fe3394",
+  "initial_pilot_snapshot": {
+    "path": "source-snapshots/pilot-initial.py",
+    "sha256": "98e93aab210c535dff327401f98f92c75b2ab68829174ab25830e2a3969b4d5d"
+  },
+  "note": "The initial8K\u2013128K ladder predates explicit seed recording and activation-offload support. Its exact pilot source is retained here. Runtime receipts record hashes of all other sources. The final256K and offload/kernel checks use the experimental code at the referenced revision."
+}

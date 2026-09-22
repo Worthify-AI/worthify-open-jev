@@ -19,6 +19,7 @@ from typing import Any, Iterable
 
 
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+HUB_REPO_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*$")
 ALLOWED_FILES = frozenset(
     {
         "adapter_model.safetensors",
@@ -441,7 +442,7 @@ def verify_remote(repo_id: str, hashes: dict[str, str], *, api: Any | None = Non
 
 
 def promote_public(artifact_dir: Path, private_repo_id: str, public_repo_id: str, *, release_public: bool,
-                   private_revision: str, api: Any | None = None) -> dict[str, str]:
+                   private_revision: str, api: Any | None = None) -> dict[str, Any]:
     """Recheck a private release, then publish the exact validated files on explicit request."""
     if not release_public:
         raise ValueError("Public promotion requires --release-public")
@@ -461,12 +462,14 @@ def promote_public(artifact_dir: Path, private_repo_id: str, public_repo_id: str
     if _remote_names(api, public_repo_id) - set(hashes) - {".gitattributes"}:
         raise ValueError("Remote repository contains stale or forbidden files")
     commit = api.upload_folder(repo_id=public_repo_id, repo_type="model", folder_path=str(artifact_dir), allow_patterns=sorted(hashes))
-    verify_remote(public_repo_id, hashes, api=api, revision=_commit_revision(commit))
+    public_revision = _commit_revision(commit)
+    verify_remote(public_repo_id, hashes, api=api, revision=public_revision)
     api.update_repo_settings(repo_id=public_repo_id, repo_type="model", private=False)
-    return hashes
+    return {"repo_id": public_repo_id, "revision": public_revision, "hashes": hashes}
 
 
-def publish_index(index_path: Path, work_dir: Path, *, release_public: bool, api: Any | None = None) -> None:
+def publish_index(index_path: Path, work_dir: Path, *, release_public: bool,
+                  api: Any | None = None) -> list[dict[str, Any]]:
     """Download two pinned private candidates and promote only verified measured packages."""
     index = _load_json(index_path)
     candidates = index.get("candidates")
@@ -518,17 +521,23 @@ def publish_index(index_path: Path, work_dir: Path, *, release_public: bool, api
         prepared.append((destination, private_id, public_id, revision))
     if base_models[0] != base_models[1]:
         raise ValueError("Both recipes must use the same selected pinned base model")
-    for destination, private_id, public_id, revision in prepared:
-        promote_public(destination, private_id, public_id, release_public=release_public, private_revision=revision, api=api)
+    return [
+        promote_public(destination, private_id, public_id, release_public=release_public,
+                       private_revision=revision, api=api)
+        for destination, private_id, public_id, revision in prepared
+    ]
 
 
 def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path, selected_seed: int, *, recipe: str,
-                    base_notice: Path | None = None) -> None:
+                    base_notice: Path | None = None, public_repo_id: str | None = None) -> None:
     """Create a reproducible package from the two real training runs and eval reports."""
     if output.exists() or len(run_dirs) != 2 or len(evaluations) != 2 or selected_seed not in (42, 43):
         raise ValueError("Package output must be new and include seeds 42 and 43")
     if recipe not in {"classification", "evidence"}:
         raise ValueError("Recipe must be classification or evidence")
+    public_repo_id = public_repo_id or f"Worthify/worthify-jev-{recipe}"
+    if not HUB_REPO_ID.fullmatch(public_repo_id):
+        raise ValueError("Public repository must be a Hugging Face owner/repository ID")
     records: dict[int, tuple[Path, dict[str, Any], dict[str, Any], str, dict[str, Path | str]]] = {}
     for run_dir, evaluation in zip(run_dirs, evaluations):
         training = _load_json(run_dir / "manifest.json")
@@ -620,9 +629,21 @@ def package_release(run_dirs: list[Path], evaluations: list[Path], output: Path,
         "## Measured held-out reports\n\n| seed | accuracy | mean task macro F1 | calibration details | latency details | peak memory bytes |\n| --- | ---: | ---: | --- | --- | --- |\n"
         + "\n".join(report_lines) + "\n\nScores are uncalibrated conditional option scores; Brier/ECE and reliability details remain in the linked per-seed reports. "
         "Expected reference environment: one NVIDIA A100 with NF4 quantization. This is an environment expectation, not a measured performance claim.\n\n"
-        "## Usage\n\n```bash\nopenjev-score --mode direct --model " + selected[1]['base_model']['id'] + " --revision " + selected[1]['base_model']['revision']
-        + " --adapter worthify/REPLACE_WITH_REPOSITORY --adapter-revision REPLACE_WITH_40_CHARACTER_HUB_COMMIT --input decisions.jsonl --output predictions.jsonl --quantization nf4\n```\n\n"
-        "Replace the adapter repository and revision placeholder with the published repository and immutable 40-character Hub commit. `attribution.json` records CLINC150 (CC-BY-3.0), WANLI (CC-BY-4.0), and interface attribution, including modifications.\n",
+        "## Usage\n\nResolve the public adapter once, then pass that immutable revision to every run:\n\n"
+        "```bash\nexport ADAPTER_REPO=" + public_repo_id + "\n"
+        "export ADAPTER_REVISION=\"$(python - <<'PY'\n"
+        "import re\n"
+        "from huggingface_hub import HfApi\n"
+        "revision = HfApi(token=False).model_info('" + public_repo_id + "').sha\n"
+        "if not isinstance(revision, str) or not re.fullmatch(r'[0-9a-f]{40}', revision):\n"
+        "    raise SystemExit('Hugging Face did not return an immutable adapter revision')\n"
+        "print(revision)\n"
+        "PY\n)\"\n"
+        "printf 'Using %s at %s\\n' \"$ADAPTER_REPO\" \"$ADAPTER_REVISION\"\n"
+        "openjev-score --mode direct --model " + selected[1]['base_model']['id'] + " --revision " + selected[1]['base_model']['revision']
+        + " --adapter \"$ADAPTER_REPO\" --adapter-revision \"$ADAPTER_REVISION\" --input decisions.jsonl --output predictions.jsonl --quantization nf4\n```\n\n"
+        "The release evidence records the public repository and its fixed 40-character revision for reproduction. "
+        "`attribution.json` records CLINC150 (CC-BY-3.0), WANLI (CC-BY-4.0), and interface attribution, including modifications.\n",
         encoding="utf-8")
     for seed, (_, training, report, _, _) in records.items():
         if seed == selected_seed:
@@ -673,6 +694,7 @@ def main(argv: Iterable[str] | None = None) -> None:
     package.add_argument("--selected-seed", type=int, required=True)
     package.add_argument("--recipe", choices=("classification", "evidence"), required=True)
     package.add_argument("--base-notice", type=Path)
+    package.add_argument("--public-repo-id")
     args = parser.parse_args(argv)
     if args.command == "validate":
         validate_release(args.artifact_dir)
@@ -681,11 +703,20 @@ def main(argv: Iterable[str] | None = None) -> None:
     elif args.command == "smoke-upload":
         print(json.dumps(smoke_upload(args.artifact_dir, args.repo_id), sort_keys=True))
     elif args.command == "promote-public":
-        promote_public(args.artifact_dir, args.private_repo_id, args.public_repo_id, release_public=args.release_public, private_revision=args.private_revision)
+        print(json.dumps(promote_public(
+            args.artifact_dir, args.private_repo_id, args.public_repo_id,
+            release_public=args.release_public, private_revision=args.private_revision,
+        ), sort_keys=True))
     elif args.command == "publish-index":
-        publish_index(args.index, args.work_dir, release_public=args.release_public)
+        print(json.dumps(publish_index(
+            args.index, args.work_dir, release_public=args.release_public,
+        ), sort_keys=True))
     else:
-        package_release(args.run_dir, args.evaluation, args.output, args.selected_seed, recipe=args.recipe, base_notice=args.base_notice)
+        package_release(
+            args.run_dir, args.evaluation, args.output, args.selected_seed,
+            recipe=args.recipe, base_notice=args.base_notice,
+            public_repo_id=args.public_repo_id,
+        )
 
 
 if __name__ == "__main__":

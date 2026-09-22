@@ -1,0 +1,229 @@
+{
+  "finished_unix": 1790088984.0935874,
+  "hardware": {
+    "compute_capability": [
+      10,
+      0
+    ],
+    "cuda_runtime": "12.8",
+    "host_cgroup_memory_limit_bytes": 250999996416,
+    "name": "NVIDIA B200",
+    "nvidia_driver": "580.126.20",
+    "total_memory_bytes": 191503007744,
+    "visible_device_count": 1
+  },
+  "limitations": [
+    "Synthetic token-space expansion is not a training dataset.",
+    "Authored synthetic option labels are not meaningful targets or a quality metric.",
+    "A completed run is only an observed single-GPU systems measurement at this exact configuration."
+  ],
+  "load_seconds": 32.806266909465194,
+  "measured_peak": {
+    "cuda_peak_allocated_bytes": 63618009600,
+    "cuda_peak_reserved_bytes": 71263322112,
+    "host_rss_bytes": {
+      "current": 2297819136,
+      "high_water": 25091186688
+    }
+  },
+  "measured_totals": {
+    "backward_seconds": 63.8435478201136,
+    "forward_seconds": 10.801452606916428,
+    "optimizer_seconds": 0.014481131918728352,
+    "total_fwd_bwd_optim_seconds": 74.65948155894876
+  },
+  "memory_after_load": {
+    "cuda_allocated_bytes": 7729184768,
+    "cuda_reserved_bytes": 7895777280,
+    "host_rss_bytes": {
+      "current": 1345978368,
+      "high_water": 25091186688
+    }
+  },
+  "model": {
+    "backend": {
+      "attention_module_backends": {
+        "flex_attention": 48
+      },
+      "configured_backend": "flex_attention",
+      "layer_type_distribution": {
+        "full_attention": 8,
+        "sliding_attention": 40
+      },
+      "num_hidden_layers": 48
+    },
+    "bitsandbytes_version": "0.50.2",
+    "dtype": "bfloat16",
+    "flex_kernel_options": {
+      "BACKEND": "TRITON",
+      "BLOCKS_ARE_CONTIGUOUS": false,
+      "ROWS_GUARANTEED_SAFE": false,
+      "bwd_BLOCK_M1": 32,
+      "bwd_BLOCK_M2": 32,
+      "bwd_BLOCK_N1": 32,
+      "bwd_BLOCK_N2": 32,
+      "fwd_BLOCK_M": 32,
+      "fwd_BLOCK_N": 32,
+      "num_stages": 2,
+      "num_warps": 4
+    },
+    "gradient_checkpointing": true,
+    "masks": {
+      "full_attention": {
+        "block_size": [
+          128,
+          128
+        ],
+        "class": "BlockMask",
+        "shape": [
+          1,
+          1,
+          65536,
+          65536
+        ]
+      },
+      "sliding_attention": {
+        "block_size": [
+          128,
+          128
+        ],
+        "class": "BlockMask",
+        "shape": [
+          1,
+          1,
+          65536,
+          65536
+        ]
+      }
+    },
+    "parameter_dtype_distribution": {
+      "torch.bfloat16": 290,
+      "torch.float32": 368,
+      "torch.uint8": 328
+    },
+    "peft_version": "0.21.0",
+    "quantization": "nf4",
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "source": "google/gemma-4-12B-it",
+    "torch_version": "2.10.0+cu128",
+    "total_parameter_count": 6478708480,
+    "trainable_dtype_distribution": {
+      "torch.float32": 368
+    },
+    "trainable_parameter_count": 21331968,
+    "transformers_version": "5.17.0",
+    "use_cache": false
+  },
+  "probe_kind": "synthetic MEMORY/GRADIENT PROBE",
+  "requested": {
+    "adapter": null,
+    "adapter_revision": null,
+    "measured_steps": 2,
+    "model": "google/gemma-4-12B-it",
+    "quantization": "nf4",
+    "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+    "tokens": 65536,
+    "warmup_steps": 1
+  },
+  "runtime": {
+    "git_dirty": false,
+    "git_head": "unavailable",
+    "source_sha256s": {
+      "experiments/long_context/kernel_probe.py": "f18482904696015cd68480bbf2ef4de8499709e4f74a7f46ef0aab11a9fc2c1c",
+      "experiments/long_context/pilot.py": "98e93aab210c535dff327401f98f92c75b2ab68829174ab25830e2a3969b4d5d",
+      "src/openjev_phase1/core.py": "73564daad4e14d78fc9a18ec40667cb96374f6fd49e8b7b7ce8547c5f92b957f",
+      "src/openjev_phase1/direct.py": "84e216f5822f9e09377b49d1e568a4c42cf05c664cc5bc97be8ef8ce4c07314e",
+      "src/openjev_phase1/training.py": "fa2b23cd5abcf476ed2b08cd14f055c290a6f2c93ddb9ef5a28b28256f05546d"
+    },
+    "versions": {
+      "bitsandbytes": "0.50.2",
+      "peft": "0.21.0",
+      "python": "3.12.3",
+      "torch": "2.10.0+cu128",
+      "transformers": "5.17.0",
+      "triton": "3.6.0"
+    }
+  },
+  "schema": "openjev-long-context-memory-gradient-probe-v1",
+  "started_unix": 1790088806.4703493,
+  "status": "completed",
+  "steps": [
+    {
+      "backward_seconds": 31.913320833817124,
+      "cuda_allocated_bytes": 9009891328,
+      "cuda_peak_allocated_bytes": 63618009600,
+      "cuda_peak_reserved_bytes": 71263322112,
+      "cuda_reserved_bytes": 71263322112,
+      "forward_seconds": 5.402179950848222,
+      "gradient_element_count": 21331968,
+      "gradient_tensor_count": 368,
+      "gradients_finite": true,
+      "host_rss_bytes": {
+        "current": 2297819136,
+        "high_water": 25091186688
+      },
+      "index": 0,
+      "loss": 3.0485873222351074,
+      "nonzero_gradient_element_count": 21321679,
+      "nonzero_gradient_tensor_count": 368,
+      "optimizer_seconds": 0.008223313838243484,
+      "synthetic_label_index": 0,
+      "total_fwd_bwd_optim_seconds": 37.32372409850359
+    },
+    {
+      "backward_seconds": 31.930226986296475,
+      "cuda_allocated_bytes": 9009891328,
+      "cuda_peak_allocated_bytes": 63618009600,
+      "cuda_peak_reserved_bytes": 71263322112,
+      "cuda_reserved_bytes": 71263322112,
+      "forward_seconds": 5.399272656068206,
+      "gradient_element_count": 21331968,
+      "gradient_tensor_count": 368,
+      "gradients_finite": true,
+      "host_rss_bytes": {
+        "current": 2297819136,
+        "high_water": 25091186688
+      },
+      "index": 1,
+      "loss": 0.28115010261535645,
+      "nonzero_gradient_element_count": 21321632,
+      "nonzero_gradient_tensor_count": 368,
+      "optimizer_seconds": 0.006257818080484867,
+      "synthetic_label_index": 1,
+      "total_fwd_bwd_optim_seconds": 37.335757460445166
+    }
+  ],
+  "support_claim": false,
+  "warmup": {
+    "backward_seconds": 32.98936456721276,
+    "cuda_allocated_bytes": 9009891328,
+    "cuda_peak_allocated_bytes": 63447353856,
+    "cuda_peak_reserved_bytes": 71263322112,
+    "cuda_reserved_bytes": 71263322112,
+    "forward_seconds": 29.112243020907044,
+    "gradient_element_count": 21331968,
+    "gradient_tensor_count": 368,
+    "gradients_finite": true,
+    "host_rss_bytes": {
+      "current": 2297819136,
+      "high_water": 25091186688
+    },
+    "index": -1,
+    "loss": 5.2552337646484375,
+    "nonzero_gradient_element_count": 9306112,
+    "nonzero_gradient_tensor_count": 184,
+    "optimizer_seconds": 0.07697145733982325,
+    "synthetic_label_index": 1,
+    "total_fwd_bwd_optim_seconds": 62.17857904545963
+  },
+  "workload": {
+    "actual_tokens": 65536,
+    "filler_repetitions": 65404,
+    "filler_token_id": 1123,
+    "option_token_ids": [
+      236776,
+      236799
+    ],
+    "prompt_sha256": "9804c94fdb0db98a50ef3d6792af634ecbdfad43552b4a07f3280bb960055857"
+  }
+}
