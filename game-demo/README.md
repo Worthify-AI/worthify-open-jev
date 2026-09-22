@@ -110,6 +110,43 @@ This verifies the packaged adapter first and builds a gallery only after all six
 episodes pass verification. Model selection uses validation metrics from the
 training project, never game outcomes.
 
+To publish those six videos beside the adapter, first create the companion asset
+bundle. The packager re-verifies every episode, requires the exact Doom/falling-
+block × seed 7/19/42 matrix, rejects smoke controllers, and binds every recording
+to the selected adapter hash and base revision:
+
+```bash
+.game-venv/bin/python game-demo/package_hf_gameplay.py package \
+  --gallery /path/to/new-gameplay-output/site \
+  --adapter-dir /path/to/release-classification \
+  --output /path/to/new-gameplay-hf-assets
+```
+
+Upload that new directory to a dedicated Hugging Face **dataset** repository.
+After upload, obtain its immutable 40-character commit and verify every remote
+file against the local bundle before inserting links into the adapter card:
+
+```bash
+.game-venv/bin/python game-demo/package_hf_gameplay.py verify-remote \
+  --assets /path/to/new-gameplay-hf-assets \
+  --asset-repo-id Worthify/worthify-jev-gameplay \
+  --asset-revision <full-Hub-commit>
+.game-venv/bin/python game-demo/package_hf_gameplay.py patch-card \
+  --adapter-dir /path/to/release-classification \
+  --assets /path/to/new-gameplay-hf-assets \
+  --asset-repo-id Worthify/worthify-jev-gameplay \
+  --asset-revision <full-Hub-commit>
+python -m openjev_phase1.publish validate \
+  --artifact-dir /path/to/release-classification
+```
+
+The generated card uses pinned Hugging Face `resolve/<commit>/...mp4` URLs in
+HTML5 video controls and provides a direct MP4 link for each run. The companion
+manifest includes video and episode hashes, outcomes, decision counts, adapter
+identity, and limitations. Keep the companion private until the coordinated
+public release; a public model card cannot play assets from a private repository
+for unauthenticated readers.
+
 ## Reuse and attribution
 
 ViZDoom supplies the Doom engine, scenario and renderer. We explicitly select
