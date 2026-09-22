@@ -1,0 +1,16 @@
+{
+  "schema": "worthify-jev-base-selection-v1",
+  "selected_model": "google/gemma-4-12B-it",
+  "revision": "707f0a3b8a3c7ad586ed01e27eafbad8a27dd0f7",
+  "decision_date": "2026-09-22",
+  "selection_method": "explicit project-owner choice",
+  "reason": "Start both recipes with 12B regardless of the larger-candidate comparison.",
+  "overrides": "fastest candidate within one percentage point of best mean validation macro-F1",
+  "comparative_winner_claim": false,
+  "test_metrics_used": false,
+  "quantization": "nf4",
+  "compute_dtype": "bfloat16",
+  "hardware_per_training_run": "one NVIDIA A100-SXM4-40GB",
+  "recipes": ["classification", "evidence"],
+  "seeds": [42, 43]
+}

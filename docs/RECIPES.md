@@ -18,7 +18,7 @@ export GPU=0
 mkdir -p "$WORK"
 ```
 
-This 12B revision is an example, not a winning-model claim. For the project release, use the base selected by the frozen validation comparison. Change `MODEL` and `REVISION` together. Expose exactly one available GPU; CUDA numeric ordering can differ from nvidia-smi, so use a verified GPU UUID on a shared host; do not stop other workloads. Use a new `WORK` directory for each experiment.
+The project owner selected this 12B revision for both recipes on September 22, 2026, independently of the larger-candidate comparison. This is not a comparative winning-model claim; the decision is frozen in `manifests/base-selection-v1.json`. Change `MODEL` and `REVISION` together for separate experiments. Expose exactly one available GPU; CUDA numeric ordering can differ from nvidia-smi, so use a verified GPU UUID on a shared host; do not stop other workloads. Use a new `WORK` directory for each experiment.
 
 ## Fetch and freeze data
 
