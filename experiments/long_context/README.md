@@ -9,6 +9,29 @@ The base revision is `google/gemma-4-12B-it` at
 262,144 tokens. Increasing that configuration value does not establish support
 for one million tokens.
 
+## Generic scoring API
+
+From an editable checkout installed with `pip install -e '.[test,train]'`, score
+ordinary OpenJEV JSONL rows containing `id`, `state`, `question`, and 2–16
+runtime-defined `options`:
+
+```bash
+CUDA_VISIBLE_DEVICES=<gpu-uuid> python -m experiments.long_context.score \
+  --input decisions.jsonl --output scores-v1.jsonl \
+  --cache-dir /path/to/hub-cache --max-tokens 262144
+```
+
+The create-only experimental command uses the pinned 12B revision with NF4
+weights, BF16 computation, native analytical FlexAttention masks, no KV cache,
+and no truncation. An immutable adapter can be supplied with both `--adapter`
+and `--adapter-revision`. The output reports caller option IDs, logits,
+conditional uncalibrated probabilities, the prediction, hashes, timing, memory,
+and runtime backend metadata; `timing_scope` makes clear that per-row timers
+exclude model loading, preflight, tokenization, and mask construction. Input
+rows need no gold label or provenance. The
+B200 receipts establish full 262,144-token forward/backward systems execution,
+not generic task quality or one-million-token support.
+
 ## Procedure
 
 Use the repository's pinned environment, installed with
