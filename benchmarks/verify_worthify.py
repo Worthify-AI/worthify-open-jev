@@ -71,7 +71,7 @@ def verify(artifact_dir: Path) -> dict:
         raise ValueError("Evidence does not use the currently pinned 12B base model")
     if (manifest.get("base_selection_sha256") != _sha(ROOT / "manifests/base-selection-v1.json")
             or manifest.get("data_manifest_sha256") != _sha(ROOT / "manifests/data-v1.json")
-            or not re.fullmatch(r"[0-9a-f]{40}", manifest.get("code_revision", ""))):
+            or not re.fullmatch(r"[0-9a-f]{40}", manifest.get("launch_code_revision", ""))):
         raise ValueError("Shared run provenance is incomplete or stale")
     if manifest.get("quantization") != "nf4" or manifest.get("prompt_version") != "direct-options-v1":
         raise ValueError("Benchmark protocol differs from the frozen protocol")

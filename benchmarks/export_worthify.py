@@ -203,7 +203,7 @@ def export(run_dir: Path, data_dir: Path, output: Path) -> None:
     for name, value in (("attribution.json", attribution), ("summary.json", summary)):
         (output / name).write_text(json.dumps(value, indent=2, sort_keys=True, allow_nan=False) + "\n")
     manifest = {"schema": "worthify-jev-benchmark-evidence-v1", "base_model": base,
-        "code_revision": launch["code_revision"],
+        "launch_code_revision": launch["code_revision"],
         "base_selection_sha256": _sha(ROOT / "manifests/base-selection-v1.json"),
         "data_manifest_sha256": _sha(ROOT / "manifests/data-v1.json"),
         "quantization": "nf4", "prompt_version": "direct-options-v1", "bootstrap_samples": 1000,

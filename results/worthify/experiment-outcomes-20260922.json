@@ -1,0 +1,92 @@
+{
+  "base_selection": "manifests/base-selection-v1.json",
+  "date": "2026-09-22",
+  "outcomes": [
+    {
+      "candidate": "google/gemma-4-26B-A4B-it",
+      "claims": {
+        "f1_measured": false,
+        "speed_measured": false
+      },
+      "hardware": {
+        "cuda_total_bytes": 42405855232,
+        "gpu_name": "NVIDIA A100-SXM4-40GB"
+      },
+      "memory_proof": {
+        "bytes_per_bfloat16_parameter": 2,
+        "conclusion": "The BF16-only non-linear tensors exceed all 40 GB device VRAM before eligible NF4 weights, quantization metadata, or inference allocations. No load was attempted because it is a guaranteed OOM under the frozen protocol.",
+        "minimum_exceeds_free_bytes_by": 5193359360,
+        "minimum_exceeds_total_bytes_by": 4747911168,
+        "nonlinear_bfloat16_minimum_bytes": 47153766400,
+        "nonlinear_bfloat16_parameters": 23576883200
+      },
+      "revision": "4d7ae4984b7db7de8f8457170b3f1a419ee76d52",
+      "runtime": {
+        "bitsandbytes": "0.50.2",
+        "bitsandbytes_conversion_rule": "Installed Transformers 5.17 replaces only modules whose exact type is torch.nn.Linear.",
+        "compute_dtype": "bfloat16",
+        "quantization": "nf4",
+        "torch": "2.10.0+cu128",
+        "transformers": "5.17.0"
+      },
+      "source_report_sha256": "0b5bac99b45d96dc7e484d8faa85401eb49fe1842544c1ebc567e783e720b07f",
+      "status": "infeasible_under_frozen_nf4_protocol",
+      "text_skeleton_parameters": {
+        "linear_nf4_eligible": 2394456064,
+        "moe_down": {
+          "count": 30,
+          "module_type": "non-Linear 3D parameter",
+          "parameters_each": 253755392,
+          "shape": [
+            128,
+            2816,
+            704
+          ]
+        },
+        "moe_gate_up": {
+          "count": 30,
+          "module_type": "non-Linear 3D parameter",
+          "parameters_each": 507510784,
+          "shape": [
+            128,
+            1408,
+            2816
+          ]
+        },
+        "nonlinear_bfloat16": 23576883200,
+        "total": 25971339264
+      }
+    },
+    {
+      "candidate": "google/gemma-4-31B-it",
+      "claims": {
+        "final_quality_metrics": false,
+        "final_speed_metrics": false
+      },
+      "partial_predictions": {
+        "rows_written": 323,
+        "sha256": "d16eb591f55383fbd5a0fd6b059d3f7726207ffccb1b41c959c56e8b989431ed"
+      },
+      "reason": "User selected 12B as the base before candidate comparison completion; 31B validation was stopped to release the assigned A100 for full training.",
+      "revision": "842da3794eaa0b77d5f08bae87a17459d91ff475",
+      "status": "interrupted_by_user_base_choice"
+    },
+    {
+      "candidate": "google/gemma-4-12B-it",
+      "reason": "PEFT preparation promoted nonquantized base parameters to FP32 during training. Its same-base reload check did not test a fresh BF16 loader. Full training started only after precision was aligned and a new fresh-process check passed.",
+      "record": "results/worthify/gemma12b-pilot-20260922.json",
+      "replacement": "results/worthify/gemma12b-pilot-bf16-20260922.json",
+      "status": "superseded_compatibility_pilot"
+    },
+    {
+      "affected_attempts": [
+        "12B validation v2",
+        "31B training pilot v1"
+      ],
+      "resolution": "Fresh process retries initialized successfully; no GPU reset or interruption of other workloads. Root cause was not established.",
+      "stage": "CUDA initialization before model load",
+      "status": "transient_cuda_startup_errors"
+    }
+  ],
+  "schema": "worthify-jev-experiment-outcomes-v1"
+}
